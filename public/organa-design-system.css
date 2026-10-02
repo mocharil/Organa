@@ -1,0 +1,201 @@
+/*
+ * Organa shared visual foundation.
+ * Canonical reference: docs/ORGANA_MASTER_DESIGN_SYSTEM.md
+ * All product and marketing surfaces should use these tokens/components.
+ */
+:root{
+  color-scheme:light;
+  --organa-navy-950:#020817;
+  --organa-navy-900:#010C2C;
+  --organa-navy-800:#101B3D;
+  --organa-blue-700:#123AD6;
+  --organa-blue-600:#1267F8;
+  --organa-blue-500:#2188FF;
+  --organa-cyan-500:#21BFFC;
+  --organa-cyan-400:#5BD8FF;
+  --organa-cyan-300:#8EE7FF;
+  --organa-indigo-600:#4240F6;
+  --organa-indigo-500:#6366F1;
+  --organa-violet-500:#8B5CF6;
+  --organa-violet-400:#A978FA;
+  --organa-magenta-500:#EC4899;
+  --organa-magenta-400:#F472B6;
+  --organa-white:#FFFFFF;
+  --organa-bg:#F8FAFF;
+  --organa-bg-secondary:#F2F5FF;
+  --organa-gray-50:#F8FAFC;
+  --organa-gray-100:#F1F5F9;
+  --organa-gray-200:#E2E8F0;
+  --organa-gray-400:#94A3B8;
+  --organa-gray-500:#64748B;
+  --organa-gray-700:#334155;
+
+  --organa-text:var(--organa-navy-900);
+  --organa-muted:var(--organa-gray-500);
+  --organa-border:rgba(66,64,246,.08);
+  --organa-border-strong:rgba(18,103,248,.14);
+  --organa-surface:rgba(255,255,255,.92);
+  --organa-surface-glass:rgba(255,255,255,.78);
+  --organa-success:#16A36A;
+  --organa-warning:#D18A16;
+  --organa-danger:#D64555;
+  --organa-review:var(--organa-indigo-600);
+
+  --organa-gradient:linear-gradient(135deg,#1267F8 0%,#4240F6 38%,#8B5CF6 68%,#21BFFC 100%);
+  --organa-gradient-primary:linear-gradient(135deg,#1267F8,#4240F6,#8B5CF6);
+  --organa-gradient-cyan:linear-gradient(135deg,#1267F8,#21BFFC);
+  --organa-gradient-collab:linear-gradient(135deg,#4240F6,#8B5CF6,#EC4899);
+  --organa-gradient-soft:linear-gradient(135deg,rgba(18,103,248,.06),rgba(139,92,246,.04),rgba(33,191,252,.05));
+
+  --text-xs:12px;
+  --text-sm:14px;
+  --text-base:16px;
+  --text-lg:18px;
+  --text-xl:20px;
+  --text-2xl:24px;
+  --text-3xl:30px;
+  --text-4xl:36px;
+  --text-5xl:48px;
+  --text-6xl:60px;
+
+  --space-1:4px;
+  --space-2:8px;
+  --space-3:12px;
+  --space-4:16px;
+  --space-5:20px;
+  --space-6:24px;
+  --space-8:32px;
+  --space-10:40px;
+  --space-12:48px;
+  --space-16:64px;
+  --space-20:80px;
+  --space-24:96px;
+
+  --radius-xs:6px;
+  --radius-sm:8px;
+  --radius-md:12px;
+  --radius-lg:16px;
+  --radius-xl:20px;
+  --radius-2xl:24px;
+  --radius-full:9999px;
+
+  --shadow-xs:0 1px 2px rgba(1,12,44,.04);
+  --shadow-sm:0 4px 12px rgba(29,46,120,.06);
+  --shadow-md:0 10px 30px rgba(29,46,120,.08);
+  --shadow-lg:0 20px 60px rgba(29,46,120,.12);
+  --shadow-glow:0 0 30px rgba(66,64,246,.20);
+
+  --ease-organa:cubic-bezier(.22,1,.36,1);
+  --motion-fast:180ms;
+  --motion-page:300ms;
+  --motion-orchestration:600ms;
+  --organa-sidebar:248px;
+  --organa-sidebar-collapsed:72px;
+  --organa-header-height:68px;
+  --organa-content-max:1520px;
+
+  /* Backward-compatible aliases used by existing surfaces. */
+  --organa-navy:var(--organa-navy-900);
+  --organa-blue-dark:var(--organa-blue-700);
+  --organa-blue:var(--organa-blue-600);
+  --organa-indigo:var(--organa-indigo-600);
+  --organa-cyan:var(--organa-cyan-500);
+  --organa-cyan-soft:var(--organa-cyan-300);
+  --organa-violet:var(--organa-violet-500);
+  --organa-purple-soft:var(--organa-violet-400);
+  --organa-surface-strong:var(--organa-white);
+  --organa-shadow:var(--shadow-lg);
+  --organa-shadow-soft:var(--shadow-md);
+  --organa-gradient-main:var(--organa-gradient-primary);
+  --organa-radius-xl:var(--radius-2xl);
+  --organa-radius-lg:var(--radius-xl);
+  --organa-radius-md:var(--radius-md);
+  --organa-radius-sm:var(--radius-sm);
+
+  /* Landing-page aliases. */
+  --background:var(--organa-bg);
+  --surface:var(--organa-surface-glass);
+  --surface-strong:var(--organa-white);
+  --border:var(--organa-border);
+  --text-primary:var(--organa-text);
+  --text-secondary:var(--organa-muted);
+  --shadow:var(--shadow-md);
+  --gradient:var(--organa-gradient);
+  --gradient-button:var(--organa-gradient-primary);
+}
+
+html,body{font-family:"Plus Jakarta Sans",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--organa-text)}
+button,input,select,textarea{font:inherit}
+:where(button,a,input,select,textarea,[tabindex]):focus-visible{outline:3px solid rgba(18,103,248,.18);outline-offset:3px}
+
+/* Reusable base components. Existing screens can adopt these incrementally. */
+.organa-card{
+  background:var(--organa-surface);
+  border:1px solid var(--organa-border);
+  border-radius:18px;
+  box-shadow:0 8px 30px rgba(31,48,120,.05);
+  padding:var(--space-5);
+  transition:transform var(--motion-fast) var(--ease-organa),box-shadow var(--motion-fast) var(--ease-organa),border-color var(--motion-fast) var(--ease-organa);
+}
+.organa-card:hover{transform:translateY(-2px);box-shadow:0 14px 40px rgba(31,48,120,.09);border-color:rgba(18,103,248,.12)}
+.organa-glass-panel{background:var(--organa-surface-glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.65);box-shadow:0 12px 40px rgba(42,52,120,.08)}
+.organa-button{min-height:40px;padding:0 16px;border-radius:12px;border:0;font-weight:700;cursor:pointer;transition:transform var(--motion-fast) var(--ease-organa),filter var(--motion-fast) var(--ease-organa),background var(--motion-fast) var(--ease-organa)}
+.organa-button:hover{transform:translateY(-1px)}
+.organa-button--primary{background:var(--organa-gradient-primary);color:#fff;box-shadow:0 8px 20px rgba(66,64,246,.17)}
+.organa-button--secondary{background:rgba(18,103,248,.07);color:var(--organa-blue-600);border:1px solid rgba(18,103,248,.14)}
+.organa-button--ghost{background:transparent;color:var(--organa-gray-700)}
+.organa-input,.organa-textarea,.organa-select{width:100%;min-height:44px;border-radius:12px;border:1px solid var(--organa-gray-200);background:#fff;color:var(--organa-text);padding:10px 14px;transition:border-color var(--motion-fast) ease,box-shadow var(--motion-fast) ease}
+.organa-textarea{min-height:96px;resize:vertical}
+.organa-input:focus,.organa-textarea:focus,.organa-select:focus{outline:0;border-color:var(--organa-blue-600);box-shadow:0 0 0 3px rgba(18,103,248,.10)}
+.organa-badge{display:inline-flex;align-items:center;gap:6px;min-height:24px;padding:2px 9px;border-radius:var(--radius-full);font-size:12px;font-weight:650;background:var(--organa-gray-100);color:var(--organa-gray-700)}
+.organa-badge::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.8}
+.organa-badge[data-status="working"]{background:#EAF4FF;color:var(--organa-blue-700)}
+.organa-badge[data-status="thinking"]{background:#F3EDFF;color:#7441D8}
+.organa-badge[data-status="review"]{background:#EEEDFF;color:var(--organa-indigo-600)}
+.organa-badge[data-status="waiting"]{background:#FFF7E7;color:#9A6813}
+.organa-badge[data-status="completed"]{background:#EAF8F1;color:#167D56}
+.organa-badge[data-status="blocked"]{background:#FFF0F2;color:#B73546}
+
+.organa-agent-avatar{position:relative;display:grid;place-items:center;flex:none;border-radius:50%;background:linear-gradient(145deg,#EEF8FF,#F2EEFF);color:var(--organa-indigo-600);font-weight:800;box-shadow:inset 0 0 0 1px rgba(66,64,246,.08),0 4px 12px rgba(29,46,120,.08)}
+.organa-agent-avatar::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid transparent;opacity:0;transition:opacity var(--motion-fast) ease}
+.organa-agent-avatar[data-status="working"]::after{opacity:1;border-color:var(--organa-cyan-500)}
+.organa-agent-avatar[data-status="thinking"]::after{opacity:1;border-color:var(--organa-violet-500);animation:organa-status-pulse 2.4s ease-in-out infinite}
+.organa-agent-avatar[data-status="collaborating"]::after{opacity:1;border-color:transparent;background:conic-gradient(var(--organa-violet-500),var(--organa-cyan-500),var(--organa-violet-500)) border-box;mask:linear-gradient(#000 0 0) padding-box,linear-gradient(#000 0 0);mask-composite:exclude;-webkit-mask:linear-gradient(#000 0 0) padding-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;animation:organa-orbit-spin 3s linear infinite}
+.organa-agent-avatar[data-status="waiting"]::after{opacity:1;border-color:var(--organa-warning)}
+.organa-agent-avatar[data-status="review"]::after{opacity:1;border-color:var(--organa-indigo-600)}
+.organa-agent-avatar[data-status="blocked"]::after{opacity:1;border-color:var(--organa-danger)}
+.organa-agent-avatar[data-status="completed"]::after{opacity:1;border-color:var(--organa-success)}
+
+.organa-empty-state{display:grid;place-items:center;text-align:center;min-height:180px;padding:var(--space-8);border:1px dashed rgba(66,64,246,.18);border-radius:var(--radius-xl);background:var(--organa-gradient-soft);color:var(--organa-muted)}
+.organa-empty-state strong{display:block;margin-bottom:var(--space-2);font-size:var(--text-lg);color:var(--organa-text)}
+
+.orbit-loader{position:relative;width:64px;height:64px;display:grid;place-items:center}
+.orbit-loader__center{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--organa-gradient-primary);color:#fff;font-size:9px;font-weight:800;box-shadow:var(--shadow-glow)}
+.orbit-loader__node{position:absolute;width:9px;height:9px;border-radius:50%;background:var(--organa-cyan-500);transform-origin:32px 32px;left:0;top:0;animation:organa-orbit-node 3.2s linear infinite}
+.orbit-loader__node:nth-child(2){background:var(--organa-violet-500);animation-delay:-1.06s}
+.orbit-loader__node:nth-child(3){background:var(--organa-indigo-600);animation-delay:-2.12s}
+@keyframes organa-orbit-node{from{transform:rotate(0deg) translateX(27px) rotate(0deg)}to{transform:rotate(360deg) translateX(27px) rotate(-360deg)}}
+@keyframes organa-orbit-spin{to{transform:rotate(360deg)}}
+@keyframes organa-status-pulse{0%,100%{box-shadow:0 0 0 0 rgba(139,92,246,.05)}50%{box-shadow:0 0 0 5px rgba(139,92,246,.12)}}
+
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.001ms!important}}
+
+/* Extended reusable Organa component primitives. */
+.organa-modal{border:1px solid var(--organa-border);border-radius:var(--radius-2xl);background:var(--organa-bg);box-shadow:0 32px 90px rgba(2,8,23,.20)}
+.organa-drawer{background:rgba(255,255,255,.96);border:1px solid var(--organa-border);box-shadow:var(--shadow-lg);backdrop-filter:blur(20px)}
+.organa-tabs{display:flex;align-items:center;gap:4px;padding:4px;border-radius:14px;background:var(--organa-gray-100)}
+.organa-tabs>button{min-height:36px;padding:0 12px;border:0;border-radius:10px;background:transparent;color:var(--organa-gray-500);font-weight:650}
+.organa-tabs>button[aria-selected="true"],.organa-tabs>button.active{background:#fff;color:var(--organa-blue-700);box-shadow:var(--shadow-xs)}
+.organa-tooltip{max-width:260px;padding:8px 10px;border-radius:10px;background:var(--organa-navy-900);color:#fff;font-size:12px;line-height:1.45;box-shadow:var(--shadow-md)}
+.agent-card,.mission-card,.deliverable-card,.approval-card,.meeting-card,.knowledge-card,.kpi-widget,.north-star-card{background:var(--organa-surface);border:1px solid var(--organa-border);border-radius:18px;box-shadow:0 8px 30px rgba(31,48,120,.05);padding:var(--space-5)}
+.approval-card{border-color:rgba(209,138,22,.16);background:linear-gradient(180deg,#fff,#FFFCF5)}
+.north-star-card{position:relative;background:radial-gradient(circle at 88% 14%,rgba(18,103,248,.06),transparent 24%),#fff}
+.meeting-card{background:radial-gradient(circle at 50% 50%,rgba(139,92,246,.04),transparent 36%),#fff}
+.agent-status{display:inline-flex;align-items:center;gap:6px;min-height:24px;padding:2px 9px;border-radius:999px;background:var(--organa-gray-100);color:var(--organa-gray-700);font-size:12px;font-weight:650}
+.agent-status::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.agent-activity{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--organa-gray-100)}
+.mission-progress{height:8px;border-radius:999px;overflow:hidden;background:var(--organa-gray-100)}
+.mission-progress>span{display:block;height:100%;border-radius:inherit;background:var(--organa-gradient-cyan)}
+.task-graph{display:grid;gap:12px}
+.orbit-connector{height:1px;background:linear-gradient(90deg,transparent,rgba(66,64,246,.24),rgba(33,191,252,.28),transparent);position:relative}
+.orbit-connector::after{content:"";position:absolute;left:50%;top:50%;width:7px;height:7px;transform:translate(-50%,-50%);border-radius:50%;background:var(--organa-cyan-500);box-shadow:0 0 0 5px rgba(33,191,252,.08)}

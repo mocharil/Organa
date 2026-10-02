@@ -1,0 +1,9 @@
+const {id,now}=require('./helpers');
+class ApprovalService{
+ constructor({stateManager,eventService}){Object.assign(this,{stateManager,eventService});}
+ request({entityType,entityId,title,summary='',projectId=null,goalIds=[],requestedBy}){const s=this.stateManager.get(),createdAt=now();const a={id:id('apr'),companyId:s.activeCompanyId,entityType,entityId,title,summary,status:'pending',projectId,goalIds,requestedBy,version:1,createdAt,updatedAt:createdAt};s.approvals.push(a);this.eventService.append('approval.requested',{actor:requestedBy||{type:'system',id:'organa'},entity:{type:'approval',id:a.id},goalIds,projectId,payload:{entityType,entityId,title}});return a;}
+ list(status){const s=this.stateManager.get();return(s.approvals||[]).filter(a=>a.companyId===s.activeCompanyId&&(!status||a.status===status)).sort((a,b)=>b.createdAt.localeCompare(a.createdAt));}
+ get(approvalId){const s=this.stateManager.get();return(s.approvals||[]).find(a=>a.companyId===s.activeCompanyId&&a.id===approvalId)||null;}
+ resolve(approvalId,action,note=''){const a=this.get(approvalId);if(!a)throw Object.assign(new Error('Approval not found.'),{status:404});if(a.status!=='pending')throw Object.assign(new Error('This approval is already resolved.'),{status:409});if(!['approved','rejected','revision_requested'].includes(action))throw Object.assign(new Error('Invalid approval action.'),{status:400});a.status=action==='revision_requested'?'rejected':action;a.note=String(note||'').slice(0,3000);a.resolvedAt=now();a.updatedAt=a.resolvedAt;a.version=(a.version||0)+1;this.eventService.append(action==='approved'?'approval.approved':'approval.rejected',{actor:{type:'user',id:'local-user'},entity:{type:'approval',id:a.id},goalIds:a.goalIds,projectId:a.projectId,payload:{action,note:a.note,entityType:a.entityType,entityId:a.entityId}});return a;}
+}
+module.exports={ApprovalService};

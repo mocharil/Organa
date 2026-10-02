@@ -1,0 +1,11 @@
+const crypto = require('node:crypto');
+const {initials} = require('../data/default-state');
+const now=()=>new Date().toISOString();
+const id=prefix=>`${prefix}_${crypto.randomUUID()}`;
+const clean=(value,max=10000)=>typeof value==='string'?value.trim().slice(0,max):'';
+const activeCompany=(state)=>state.companies.find(c=>c.id===state.activeCompanyId);
+const activeNorthStar=(state)=>[...(state.northStars||[])].filter(n=>n.companyId===state.activeCompanyId&&n.status==='active').sort((a,b)=>(b.version||0)-(a.version||0))[0]||null;
+const activeAgents=(state)=>(state.agents||[]).filter(a=>a.companyId===state.activeCompanyId&&a.status==='active');
+const groupForDivision=division=>{const d=String(division||'').toLowerCase();if(/lead|executive|management/.test(d))return'leadership';if(/engineer|product|design|tech|creative/.test(d))return'engineering';if(/support|customer|finance|operation|service/.test(d))return'service';return'marketing';};
+const avatarFor=(name,division,index=0)=>({initials:initials(name),gender:index%3===0?'male':'female',group:groupForDivision(division)});
+module.exports={now,id,clean,activeCompany,activeNorthStar,activeAgents,groupForDivision,avatarFor};

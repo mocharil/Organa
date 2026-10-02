@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>Organa</title>
+  <defs>
+    <linearGradient id="g" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#21BFFC"/><stop offset=".38" stop-color="#1267F8"/><stop offset=".68" stop-color="#6E6FFC"/><stop offset="1" stop-color="#B882FC"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="18" fill="#010C2C"/>
+  <circle cx="32" cy="32" r="13" fill="none" stroke="#FFFFFF" stroke-opacity=".3" stroke-width="2"/>
+  <path d="M13 40c9 12 27 15 38 4M17 18C27 9 44 11 52 23M12 35C11 23 18 13 30 9" fill="none" stroke="url(#g)" stroke-width="3.5" stroke-linecap="round"/>
+  <circle cx="14" cy="40" r="5" fill="#68D4FD"/><circle cx="52" cy="23" r="5" fill="#B882FC"/><circle cx="30" cy="9" r="5" fill="#FFFFFF"/>
+  <circle cx="32" cy="32" r="6" fill="#FFFFFF"/>
+</svg>

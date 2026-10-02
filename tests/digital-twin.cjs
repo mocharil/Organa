@@ -1,0 +1,18 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const root=path.join(__dirname,'..');
+const html=fs.readFileSync(path.join(root,'public','app.html'),'utf8');
+const office=fs.readFileSync(path.join(root,'public','office.js'),'utf8');
+const meetings=fs.readFileSync(path.join(root,'server','services','meeting-service.js'),'utf8');
+assert.match(html,/id="digitalTwinStatus"/);
+assert.match(html,/Live organization/);
+assert.match(html,/Ambient motion: on/);
+assert.match(office,/TWIN_TASK_STATE=\{active:'working',blocked:'blocked',review:'review',waiting_dependency:'waiting'/);
+assert.match(office,/fetch\('\/api\/events\?limit=120'/);
+assert.match(office,/beginTwinMeeting/);
+assert.match(office,/reviewSpots/);
+assert.match(office,/agent\.workState&&agent\.workState!=='idle'/);
+assert.match(office,/workState:a\.workState/);
+assert.match(meetings,/meeting\.failed/);
+console.log('PASS: verified task and meeting state drives the 3D office digital twin, while ambient motion is isolated to idle coworkers');

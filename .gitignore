@@ -1,0 +1,13 @@
+.DS_Store
+node_modules/
+.env
+.env.*
+!.env.example
+data/*.json
+!data/.gitkeep
+*.log
+# Never commit local cloud credential files.
+service-account*.json
+gcp-key*.json
+.credentials/
+secrets/
