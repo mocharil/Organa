@@ -17,12 +17,35 @@ function likelyModelFor(providerId, model) {
   return providerId === 'dry-run';
 }
 
+function providerSetupMessage(providerId) {
+  if (providerId === 'vertex') return 'Gemini on Vertex AI is not ready. Configure a Google Cloud project plus a service account or Application Default Credentials in Settings, then retry.';
+  if (providerId === 'gemini') return 'Gemini Developer API is not ready. Configure GEMINI_API_KEY on the server, then retry.';
+  if (providerId === 'openai') return 'OpenAI is not ready. Configure OPENAI_API_KEY on the server, then retry.';
+  if (providerId === 'anthropic') return 'Anthropic is not ready. Configure ANTHROPIC_API_KEY on the server, then retry.';
+  return 'The selected AI provider is not ready. Open Settings and configure a live provider, or switch to deterministic mode.';
+}
+
+function normalizeProviderError(error, providerId) {
+  const message = String(error?.message || error || 'AI provider request failed.');
+  const lower = message.toLowerCase();
+  const authFailure = /(credential|application default|unauthenticated|authentication|permission denied|permission_denied|api key|api_key|401|403|project.*required|not configured)/i.test(message);
+  const wrapped = new Error(authFailure ? providerSetupMessage(providerId) : `The ${LABELS[providerId] || providerId} request failed. You can retry, switch to deterministic mode, or check AI Settings.`);
+  wrapped.status = authFailure ? 424 : 503;
+  wrapped.code = authFailure ? 'AI_PROVIDER_NOT_READY' : 'AI_PROVIDER_UNAVAILABLE';
+  wrapped.publicMessage = wrapped.message;
+  wrapped.cause = error;
+  wrapped.provider = providerId;
+  wrapped.details = authFailure ? {provider: providerId, setupRequired: true} : {provider: providerId, retryable: true};
+  return wrapped;
+}
+
 class ProviderManager extends LlmProvider {
   constructor({providers, config, stateManager}) {
     super({name: 'dry-run', model: null});
     this.providers = providers;
     this.config = config;
     this.stateManager = stateManager;
+    this.lastFailure = null;
     this.refresh();
   }
 
@@ -68,6 +91,7 @@ class ProviderManager extends LlmProvider {
       id,
       label: LABELS[id],
       configured: this.providers.has(id),
+      live: id !== 'dry-run',
       authMode: id === 'vertex' ? this.vertexAuthMode() : id === 'gemini' ? 'api-key' : id === 'openai' ? 'api-key' : id === 'anthropic' ? 'api-key' : 'none',
       defaultModel: this.defaultModel(id, false),
       plannerModel: this.defaultModel(id, true),
@@ -81,12 +105,27 @@ class ProviderManager extends LlmProvider {
   }
 
   settings() {
+    const providers = this.list();
+    const liveProviders = providers.filter(item => item.live && item.configured);
+    const selected = providers.find(item => item.id === this.activeProviderId) || providers.find(item => item.id === 'dry-run');
     return {
       provider: this.activeProviderId,
       model: this.model,
       plannerModel: this.plannerModel,
       forcedDryRun: Boolean(this.config.dryRun),
-      providers: this.list(),
+      runtime: {
+        mode: this.activeProviderId === 'dry-run' ? 'deterministic' : 'live-ai',
+        usingLiveAi: this.activeProviderId !== 'dry-run',
+        liveProviderConfigured: liveProviders.length > 0,
+        setupRequired: this.activeProviderId === 'dry-run' && liveProviders.length === 0,
+        selectedProviderLabel: selected?.label || LABELS[this.activeProviderId] || this.activeProviderId,
+        authMode: selected?.authMode || 'none',
+        status: this.activeProviderId === 'dry-run'
+          ? (liveProviders.length ? 'deterministic' : 'setup-required')
+          : (this.lastFailure?.provider === this.activeProviderId ? 'error' : 'configured'),
+        lastError: this.lastFailure?.provider === this.activeProviderId ? {...this.lastFailure} : null,
+      },
+      providers,
     };
   }
 
@@ -100,6 +139,7 @@ class ProviderManager extends LlmProvider {
     settings.plannerModel = String(plannerModel || '').trim() || this.defaultModel(id, true) || settings.model;
     settings.updatedAt = new Date().toISOString();
     await this.stateManager.persist();
+    this.lastFailure = null;
     this.refresh();
     return this.settings();
   }
@@ -118,7 +158,16 @@ class ProviderManager extends LlmProvider {
   async generate(args = {}) {
     const planner = Boolean(args.planner || ['company_architect', 'agent_designer', 'chief_of_staff', 'standup'].includes(args.metadata?.action));
     const selected = this.resolve(args.provider, args.model, planner);
-    return selected.provider.generate({...args, model: selected.model});
+    try {
+      const response = await selected.provider.generate({...args, model: selected.model});
+      if (selected.id === this.activeProviderId) this.lastFailure = null;
+      return response;
+    } catch (error) {
+      if (selected.id === 'dry-run') throw error;
+      const normalized = normalizeProviderError(error, selected.id);
+      if (selected.id === this.activeProviderId) this.lastFailure = {provider:selected.id,code:normalized.code,message:normalized.publicMessage,at:new Date().toISOString()};
+      throw normalized;
+    }
   }
 }
 

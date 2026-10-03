@@ -10,6 +10,14 @@ function validateDag(tasks,maxTasks,agentIds){
  const visiting=new Set(),visited=new Set();function visit(x){if(visiting.has(x))throw Object.assign(new Error('Plan contains a circular dependency.'),{status:502});if(visited.has(x))return;visiting.add(x);const task=tasks.find(t=>t.tempId===x);for(const dep of task.dependsOn)visit(dep);visiting.delete(x);visited.add(x);}ids.forEach(visit);return tasks;
 }
 
+function buildRoutingSummary(plan,agents,coordinator){
+ const assignments=(plan.tasks||[]).map(task=>({tempId:task.tempId,title:task.title,ownerAgentId:task.preferredAgentIds?.[0]||null,collaboratorAgentIds:(task.collaborationSuggestedWith||[]).filter(Boolean),reason:task.reason||''}));
+ const counts=new Map();for(const item of assignments)if(item.ownerAgentId)counts.set(item.ownerAgentId,(counts.get(item.ownerAgentId)||0)+1);
+ const primaryAgentId=[...counts.entries()].sort((a,b)=>b[1]-a[1])[0]?.[0]||assignments[0]?.ownerAgentId||null;
+ const participantAgentIds=[...new Set(assignments.flatMap(item=>[item.ownerAgentId,...item.collaboratorAgentIds]).filter(id=>agents.some(agent=>agent.id===id)))];
+ return{mode:'chief_of_staff',coordinatorAgentId:coordinator?.id||null,primaryAgentId,participantAgentIds,assignments,rationale:'Organa matched each workstream to active employee skills and role ownership, while the Chief of Staff coordinates dependencies and synthesis.'};
+}
+
 class OrchestrationService{
  constructor({stateManager,provider,eventService,usageService,config}){Object.assign(this,{stateManager,provider,eventService,usageService,config});}
  async plan(goalInput={}){
@@ -19,9 +27,9 @@ class OrchestrationService{
   const response=await this.provider.generate({...prompt,responseSchema:planSchema,metadata:{action:'chief_of_staff'},context:{goal,northStar,agents,maxTasks:this.config.maxPlanTasks}});
   this.usageService.record(response,{purpose:'chief_of_staff'});const plan=response.data||{};
   validateDag(plan.tasks,this.config.maxPlanTasks,new Set(agents.map(a=>a.id)));
-  const createdAt=now();const goalEntity={id:id('goal'),companyId:state.activeCompanyId,title:goal.slice(0,160),description:goal,status:'planning',successCriteria:[],createdAt,updatedAt:createdAt};state.goals.push(goalEntity);
-  const project={id:id('prj'),companyId:state.activeCompanyId,title:goal.slice(0,160),objective:goal,goalIds:[goalEntity.id],status:(plan.clarifyingQuestions||[]).length?'needs_input':'draft_plan',planDraft:plan,northStarVersion:northStar?.version||null,createdBy:{type:'user',id:'local-user'},createdAt,updatedAt:createdAt};state.projects.push(project);
-  this.eventService.append('project.plan_generated',{actor:{type:'agent',id:(agents.find(a=>/chief of staff/i.test(a.role))||agents[0]).id},entity:{type:'project',id:project.id},goalIds:project.goalIds,projectId:project.id,payload:{taskCount:plan.tasks.length,questions:plan.clarifyingQuestions||[]}});
+  const createdAt=now();const coordinator=(agents.find(a=>/chief of staff/i.test(a.role))||agents[0]);const routing=buildRoutingSummary(plan,agents,coordinator);const goalEntity={id:id('goal'),companyId:state.activeCompanyId,title:goal.slice(0,160),description:goal,status:'planning',successCriteria:[],createdAt,updatedAt:createdAt};state.goals.push(goalEntity);
+  const project={id:id('prj'),companyId:state.activeCompanyId,title:goal.slice(0,160),objective:goal,goalIds:[goalEntity.id],status:(plan.clarifyingQuestions||[]).length?'needs_input':'draft_plan',intakeMode:'chief_of_staff',routing,planDraft:plan,northStarVersion:northStar?.version||null,createdBy:{type:'user',id:'local-user'},createdAt,updatedAt:createdAt};state.projects.push(project);
+  this.eventService.append('project.plan_generated',{actor:{type:'agent',id:(agents.find(a=>/chief of staff/i.test(a.role))||agents[0]).id},entity:{type:'project',id:project.id},goalIds:project.goalIds,projectId:project.id,payload:{taskCount:plan.tasks.length,questions:plan.clarifyingQuestions||[],intakeMode:'chief_of_staff',routing}});
   await this.stateManager.persist();return project;
  }
  get(projectId){const s=this.stateManager.get();return(s.projects||[]).find(p=>p.companyId===s.activeCompanyId&&p.id===projectId)||null;}

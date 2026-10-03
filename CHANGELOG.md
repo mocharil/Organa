@@ -1,4 +1,93 @@
+## v3.18 — Dual Work Intake
+
+- Added two explicit work-entry paths in Missions: **Ask Chief of Staff** for automatic planning/routing and **Assign to AI Employee** for direct ownership.
+- Chief of Staff plans now persist a routing summary with coordinator, primary owner, participating agents, assignments, and routing rationale.
+- Direct assignments are tracked as governed Organa tasks with `intakeMode=direct_agent`, human review by default, events, usage, Stand-up visibility, and deliverable traceability.
+- Added searchable division-grouped employee picker and direct-assignment history inside Mission Control.
+- Added routing preview and per-task “why this route” explanations before a Chief-routed mission is activated.
+- Both flows continue to work in deterministic mode when no live LLM is configured.
+
+## v3.17 — AI Setup Guardrails
+
+- Made live-AI state visible globally in the sidebar and inside AI-powered work surfaces instead of forcing users to infer whether Gemini is configured.
+- Confirmed and surfaced both Gemini authentication paths: Vertex AI with service account / Application Default Credentials, or Gemini Developer API with a server-side API key.
+- Added deterministic-mode notices for organization design, employee design, mission planning/execution, meetings, Stand-up, and direct task execution.
+- Added actionable provider errors so missing/broken credentials return setup guidance instead of a generic HTTP 500.
+- Added runtime status metadata to `/api/health`, `/api/llm/settings`, and `/api/agents`, including setup-required and degraded provider state.
+- Added regression coverage proving Organa stays usable with zero live-LLM credentials and that provider authentication failures are reported as actionable setup errors.
+
+## v3.16 — Stand-up Reliability
+
+- Made Morning Stand-up resilient to transient or malformed LLM responses.
+- Added a deterministic verified fallback generated directly from stored tasks, approvals, meetings, blockers, and queued work instead of returning HTTP 500 when AI summarization is unavailable.
+- Added provenance enforcement so AI-generated stand-up items can only reference records present in the deterministic activity snapshot.
+- Tightened the stand-up response schema and required stable refs for every list item.
+- Added `/api/standups/latest` so the latest owner brief survives page refreshes.
+- Added degraded-mode messaging in the UI and a regression test for provider failures, invented refs, and missing workspace state.
+
 # Changelog
+
+## v3.15 — Hierarchical AI Team
+
+- Rebuilt Your AI Team as an organization chart: Human Founder → AI Chief of Staff → divisions → specialist AI employees.
+- Added collapsible division branches and explicit reporting-line labels.
+- Added an integrated employee profile with current work, responsibilities, skills, manager/direct reports, collaborators, activity, performance, model usage, and configuration.
+- Added editable manager/reporting line, division, purpose, responsibilities, skills, provider/model, prompt, and personality settings.
+- Added lifecycle controls for hire, pause, activate, archive, and restore.
+- Added reporting-line validation to reject self-management and management cycles; the Chief of Staff always reports to the Human Founder.
+- Added hierarchy regression coverage.
+
+## v3.14 — Unified navigation
+- Fixed incorrect sidebar routing where Knowledge opened Approval Center, Goals opened Overview, and Performance opened Team.
+- Added dedicated Knowledge, Goals & North Star, and Performance views.
+- Added Approvals and Stand-up to the global sidebar so important top-level surfaces no longer exist only inside Organization Control.
+- Synchronized active navigation state and Organization Control header copy with the selected global section.
+- Added a navigation consistency regression test.
+
+## v3.13 — Explicit onboarding start path
+- Added a first onboarding decision: **Build from scratch** or **Use a template**.
+- Split the onboarding configuration UI so each path has its own focused setup instead of mixing templates under the scratch form.
+- Template onboarding now supports selecting a starter team first, then customizing company name, goal, and extra hard constraints.
+- Review screen now shows which starting path produced the proposal.
+- Template-specific constraints are merged into the proposal North Star before activation.
+
+## v3.12 — Onboarding reliability & guided setup
+- Rebuilt the `/app?onboarding=1` experience as a focused guided setup instead of reusing the full dashboard surface.
+- Onboarding no longer waits for the 3D scene to finish before becoming interactive.
+- Added a non-modal onboarding workspace that leaves the main app navigation usable.
+- Added request timeouts and recoverable error states so buttons cannot remain stuck indefinitely.
+- Added a four-step flow: Outcome → Team design → Review → Activate.
+- Added clearer fields for company context, desired outcome, and hard constraints.
+- Added example outcomes and editable template previews.
+- Activation now removes the onboarding query before opening the live office, preventing the setup flow from reopening in a loop.
+
+## v3.11 — Floating compact landing header
+- Added an elegant scroll-responsive landing header that starts full-width and shrinks into a centered floating pill after the user scrolls down.
+- Reduced logo, nav spacing, and CTA sizing in the compact state while preserving the full navigation hierarchy.
+- Added glass blur, soft Organa-blue shadowing, responsive mobile behavior, and `prefers-reduced-motion` support.
+
+## v3.10 — Live organization flow + visual use cases
+- Rebuilt the landing-page organization diagram as a repeating founder → Chief of Staff → division → specialist-agent flow.
+- Added reusable Organa department SVG assets for Chief of Staff, Product, Engineering, Marketing, Sales, Operations, and Finance.
+- Added sequential branch animation, network pulses, specialist-agent reveal states, and reduced-motion behavior.
+- Reworked the “Built for real work” cards with generated background visuals and a native Organa adaptation of the supplied ColorChangeCards hover interaction.
+- Added grayscale-to-color hover/focus transition, image zoom, rotating arrow, and rolling title animation without introducing React/Tailwind into the current vanilla app.
+
+## v3.9.2 — Consistent logo + foldable sidebar
+- Standardized the in-app sidebar branding to use the same Organa logo family as the landing page and favicon.
+- Added a fold / unfold desktop sidebar control so users can widen the 3D office view.
+- Persisted the sidebar state in local storage so the workspace remembers the preferred layout.
+
+## v3.9.1 — Organa logo and favicon refresh
+- Replaced the Organa logo mark with the new uploaded orbital icon.
+- Updated the full logo lockup asset to use the new icon with the Organa wordmark.
+- Regenerated the favicon from the same source mark for brand consistency across the landing page and app.
+
+## v3.9 — Landing visuals upgrade
+- Added visual image previews for all six core feature cards on the landing page.
+- Added a dedicated “Inside the app” landing section showcasing the 3D digital twin app experience.
+- Replaced the abstract workroom illustration with a richer collaboration image that matches the Organa visual system.
+- Bundled new landing assets for AI Chief of Staff, Team Builder, Agent Collaboration, Company North Star, Morning Stand-up, Approval Center, and the 3D app showcase.
 
 ## 3.8.0 - Live Organization Digital Twin
 

@@ -6,9 +6,11 @@
     missions: 'mission',
     team: 'team',
     meetings: 'meetings',
-    knowledge: 'review',
-    goals: 'company',
-    performance: 'team',
+    knowledge: 'knowledge',
+    approvals: 'review',
+    standup: 'standup',
+    goals: 'goals',
+    performance: 'performance',
     settings: 'settings'
   };
   const mission = document.getElementById('missionDialog');
@@ -17,6 +19,37 @@
 
   function setActive(route) {
     routeButtons.forEach(button => button.classList.toggle('active', button.dataset.organaRoute === route));
+  }
+
+  const aiStatus = document.getElementById('organaAiStatus');
+  function renderAiStatus(settings) {
+    if (!aiStatus) return;
+    const runtime = settings?.runtime || {};
+    const provider = (settings?.providers || []).find(item => item.id === settings?.provider);
+    if (runtime.status === 'error') {
+      aiStatus.dataset.mode = 'error';
+      aiStatus.textContent = 'AI setup needs attention';
+      aiStatus.title = runtime.lastError?.message || 'The selected AI provider could not complete a request. Open Settings to review authentication.';
+      return;
+    }
+    if (runtime.usingLiveAi) {
+      aiStatus.dataset.mode = 'live';
+      aiStatus.textContent = `AI · ${provider?.label || runtime.selectedProviderLabel || settings.provider || 'configured'}`;
+      aiStatus.title = `Live provider selected${settings?.model ? ` · ${settings.model}` : ''}. Authentication is verified on model requests.`;
+      return;
+    }
+    aiStatus.dataset.mode = 'deterministic';
+    aiStatus.textContent = runtime.liveProviderConfigured ? 'AI · deterministic mode' : 'AI not connected · demo mode';
+    aiStatus.title = runtime.liveProviderConfigured
+      ? 'A live provider is configured, but deterministic mode is selected. Open Settings to switch.'
+      : 'No live AI provider is configured. Organa remains usable in deterministic demo mode.';
+  }
+  async function refreshAiStatus() {
+    try {
+      const response = await fetch('/api/llm/settings', {cache:'no-store'});
+      if (!response.ok) return;
+      renderAiStatus(await response.json());
+    } catch { /* workspace remains usable if status cannot be loaded */ }
   }
 
   function openMissionTab(tab, route) {
@@ -28,6 +61,11 @@
     };
     setTimeout(choose, 40);
   }
+
+  aiStatus?.addEventListener('click', () => openMissionTab('settings', 'settings'));
+  refreshAiStatus();
+  document.addEventListener('organa:ai-settings-changed', refreshAiStatus);
+  document.addEventListener('organa:ai-provider-error', () => refreshAiStatus());
 
   routeButtons.forEach(button => {
     button.addEventListener('click', () => {
@@ -43,7 +81,7 @@
     });
   });
 
-  document.getElementById('organaNotifications')?.addEventListener('click', () => openMissionTab('review', 'knowledge'));
+  document.getElementById('organaNotifications')?.addEventListener('click', () => openMissionTab('review', 'approvals'));
   mission?.addEventListener('close', () => setActive('office'));
 })();
 
@@ -68,4 +106,32 @@
     title.textContent = stages[index][0];
     step.textContent = stages[index][1];
   }, 650);
+})();
+
+
+// Desktop sidebar fold / unfold for a wider 3D office view.
+(() => {
+  const body = document.body;
+  const toggle = document.getElementById('sidebarToggle');
+  if (!body || !toggle) return;
+  const key = 'organaSidebarCollapsed';
+
+  const apply = collapsed => {
+    body.classList.toggle('sidebar-collapsed', collapsed);
+    toggle.setAttribute('aria-pressed', collapsed ? 'true' : 'false');
+    toggle.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
+    toggle.setAttribute('title', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
+  };
+
+  try {
+    apply(localStorage.getItem(key) === '1');
+  } catch {
+    apply(false);
+  }
+
+  toggle.addEventListener('click', () => {
+    const next = !body.classList.contains('sidebar-collapsed');
+    apply(next);
+    try { localStorage.setItem(key, next ? '1' : '0'); } catch {}
+  });
 })();

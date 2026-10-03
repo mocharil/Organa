@@ -20,6 +20,10 @@ class BootstrapService {
       const goal=String(input.goal).trim().slice(0,1000);
       data.initialGoals=[{title:goal.slice(0,160),description:goal,deadline:null,successCriteria:['A reviewable cross-functional outcome is produced'],suggestedKpis:[]}];
     }
+    if(input.constraints){
+      const extra=String(input.constraints).split('\n').map(value=>value.trim()).filter(Boolean).slice(0,10);
+      data.northStarDraft.hardConstraints=[...new Set([...(data.northStarDraft.hardConstraints||[]),...extra])];
+    }
     data.initialTasks=[];
     data.approvalPolicyDraft={externalAction:'human_approval',spending:'human_approval',policyChange:'human_approval'};
     data.assumptions=[`Started from the ${template.name} template. Review every role and constraint before activation.`];

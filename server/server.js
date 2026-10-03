@@ -48,7 +48,7 @@ async function buildRuntime(){
 async function api(runtime,req,res,url){
  const {stateManager,provider,storageMode,eventService,usageService,companyService,northStarService,deliverableService,approvalService,orchestrationService,agentService,bootstrapService,taskService,taskWorker,meetingService,standupService}=runtime;
  const body=async()=>readJson(req);
- if(url.pathname==='/api/health'&&req.method==='GET')return send(res,200,{status:'ok',version:'3.8.0-organa',provider:provider.name,model:provider.model,plannerModel:provider.plannerModel,storage:storageMode,companyId:stateManager.companyId(),cloudReady:Boolean(config.googleCloudProject),timestamp:now()});
+ if(url.pathname==='/api/health'&&req.method==='GET'){const llm=provider.settings();return send(res,200,{status:'ok',version:'3.18.0-organa',provider:provider.name,model:provider.model,plannerModel:provider.plannerModel,storage:storageMode,companyId:stateManager.companyId(),cloudReady:Boolean(config.googleCloudProject),ai:llm.runtime,timestamp:now()});}
  if(url.pathname==='/api/llm/settings'&&req.method==='GET')return send(res,200,provider.settings());
  if(url.pathname==='/api/llm/settings'&&req.method==='PATCH')return send(res,200,await provider.configure(await body()));
  if(url.pathname==='/api/company'&&req.method==='GET')return send(res,200,{company:companyService.get(),northStar:northStarService.get()});
@@ -61,7 +61,7 @@ async function api(runtime,req,res,url){
  m=url.pathname.match(/^\/api\/company-bootstrap\/proposals\/([^/]+)\/activate$/);if(m&&req.method==='POST'){const result=await bootstrapService.activate(m[1],await body());setImmediate(taskWorker.kick);return send(res,200,result);}
 
  if(url.pathname==='/api/agents'&&req.method==='GET'){
-  const list=agentService.list({includeDrafts:url.searchParams.get('includeDrafts')==='1'});const members=Object.fromEntries(agentService.roster().map(a=>[a.displayName,{id:a.id,role:a.role,model:a.model,division:a.division,group:a.group}]));return send(res,200,{mode:provider.name,model:provider.model,members,roster:agentService.roster(),agents:list});
+  const list=agentService.list({includeDrafts:url.searchParams.get('includeDrafts')==='1'});const members=Object.fromEntries(agentService.roster().map(a=>[a.displayName,{id:a.id,role:a.role,model:a.model,division:a.division,group:a.group}]));const llm=provider.settings();return send(res,200,{mode:provider.name,model:provider.model,ai:llm.runtime,members,roster:agentService.roster(),agents:list});
  }
  if(url.pathname==='/api/agents/design'&&req.method==='POST'){const input=await body();return send(res,201,await agentService.design(input.request));}
  m=url.pathname.match(/^\/api\/agents\/([^/]+)$/);if(m&&req.method==='GET'){const a=agentService.get(m[1]);return a?send(res,200,a):send(res,404,{error:'Agent not found.'});}if(m&&req.method==='PATCH')return send(res,200,await agentService.patch(m[1],await body()));
@@ -100,6 +100,7 @@ async function api(runtime,req,res,url){
  m=url.pathname.match(/^\/api\/approvals\/([^/]+)\/(approve|reject|request-revision)$/);if(m&&req.method==='POST'){const input=await body(),a=approvalService.get(m[1]);if(!a)return send(res,404,{error:'Approval not found.'});if(a.entityType==='task'){const task=taskService.get(a.entityId);if(!task)return send(res,404,{error:'Linked task not found.'});if(m[2]==='approve')return send(res,200,await taskService.review(task.id,{action:'approve',version:task.version}));return send(res,200,await taskService.review(task.id,{action:'revise',feedback:input.note||input.feedback||'Please revise this output.',version:task.version}));}if(a.entityType==='meeting')return send(res,200,await meetingService.approve(a.entityId,m[2]==='approve',input.note||input.feedback||''));const resolved=approvalService.resolve(a.id,m[2]==='approve'?'approved':'rejected',input.note||'');await stateManager.persist();return send(res,200,resolved);}
 
  if(url.pathname==='/api/events'&&req.method==='GET')return send(res,200,eventService.list({after:url.searchParams.get('after')||undefined,type:url.searchParams.get('type')||undefined,limit:Number(url.searchParams.get('limit')||200)}));
+ if(url.pathname==='/api/standups/latest'&&req.method==='GET')return send(res,200,standupService.latest());
  if(url.pathname==='/api/standups/generate'&&req.method==='POST')return send(res,201,await standupService.generate());
  m=url.pathname.match(/^\/api\/standups\/([^/]+)$/);if(m&&req.method==='GET'){const st=standupService.get(m[1]);return st?send(res,200,st):send(res,404,{error:'Stand-up not found.'});}
  if(url.pathname==='/api/usage/summary'&&req.method==='GET')return send(res,200,usageService.summary());
@@ -110,7 +111,7 @@ async function api(runtime,req,res,url){
 
 (async()=>{
  const runtime=await buildRuntime();
- const server=http.createServer(async(req,res)=>{const url=new URL(req.url,`http://${req.headers.host||config.host}`);if(!url.pathname.startsWith('/api/'))return serveFile(res,url);try{await api(runtime,req,res,url);}catch(error){const status=error.status||500;send(res,status,{error:status>=500?'Server error.':error.message,details:status>=500?undefined:error.details});if(status>=500)console.error(error);}});
+ const server=http.createServer(async(req,res)=>{const url=new URL(req.url,`http://${req.headers.host||config.host}`);if(!url.pathname.startsWith('/api/'))return serveFile(res,url);try{await api(runtime,req,res,url);}catch(error){const status=error.status||500;const publicError=error.publicMessage||(status>=500?'Server error.':error.message);send(res,status,{error:publicError,code:error.code||undefined,details:error.publicMessage?error.details:(status>=500?undefined:error.details)});if(status>=500)console.error(error);}});
  server.listen(config.port,config.host,()=>{console.log(`Organa: http://${config.host}:${config.port}`);console.log(`AI provider: ${runtime.provider.name}${runtime.provider.model?` · ${runtime.provider.model}`:''}${runtime.provider.plannerModel&&runtime.provider.plannerModel!==runtime.provider.model?` · planner ${runtime.provider.plannerModel}`:''}`);console.log(`Persistence: ${runtime.storageMode}`);runtime.taskWorker.kick();});
  setInterval(()=>runtime.taskWorker.kick(),1500).unref();
 })().catch(error=>{console.error('Failed to start Organa:',error);process.exitCode=1;});

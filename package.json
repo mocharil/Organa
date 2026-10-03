@@ -1,11 +1,11 @@
 {
   "name": "organa-ai",
-  "version": "3.8.0",
+  "version": "3.18.0",
   "private": true,
-  "description": "Organa: AI organization OS with a marketing landing page, onboarding flow, and configurable Gemini/Vertex AI, OpenAI, Anthropic and dry-run LLM providers.",
+  "description": "Organa: AI organization OS with dual work intake, Chief of Staff auto-routing, direct AI employee assignment, governed execution, and configurable multi-LLM providers.",
   "scripts": {
     "start": "node server/server.js",
-    "test": "node tests/provider-config.cjs && node tests/hackathon-core.cjs && node tests/digital-twin.cjs",
+    "test": "node tests/provider-config.cjs && node tests/hackathon-core.cjs && node tests/digital-twin.cjs && node tests/navigation-consistency.cjs && node tests/team-hierarchy.cjs && node tests/standup-reliability.cjs && node tests/ai-setup-guardrails.cjs && node tests/dual-work-intake.cjs",
     "check": "node --check server/server.js && node --check server/config.js && node --check server/ai/provider-manager.js && node --check server/ai/gemini-provider.js && node --check server/ai/openai-provider.js && node --check server/ai/anthropic-provider.js && node --check public/tasks.js && node --check public/mission-control.js && node --check public/office.js && node --check public/organa-ui.js && node --check public/landing.js"
   },
   "engines": {

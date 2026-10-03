@@ -32,7 +32,7 @@
     try{
       const response=await fetch(path,{method,headers:{'content-type':'application/json'},body:body&&JSON.stringify(body)});
       const data=await response.json().catch(()=>({}));
-      if(!response.ok)throw new Error(data.error||`Server error ${response.status}`);
+      if(!response.ok){const err=new Error(data.error||`Server error ${response.status}`);err.code=data.code||'';if(err.code==='AI_PROVIDER_NOT_READY'||err.code==='AI_PROVIDER_UNAVAILABLE')document.dispatchEvent(new CustomEvent('organa:ai-provider-error',{detail:{code:err.code,message:err.message}}));throw err;}
       return data;
     }finally{if(write){writing--;mutation++;}}
   }
@@ -139,7 +139,7 @@
       article.append(node('p', `The agent could not finish: ${task.error}`, 'task-error'));
       actions.append(action('Try again', () => update(task.id, 'queued')));
     } else if (task.status === 'queued') article.append(node('p', 'Waiting for the AI agent to pick this up.', 'task-agent'));
-    else if (task.status === 'active') article.append(node('p', agent.mode === 'gemini' ? 'The Gemini agent is working on this…' : 'Dry run in progress…', 'task-agent'));
+    else if (task.status === 'active') article.append(node('p', agent.mode !== 'dry-run' ? 'The configured AI agent is working on this…' : 'Deterministic demo run in progress…', 'task-agent'));
     else {
       article.append(node('p', task.by === 'dry-run' ? 'Dry run result, not AI output. Review before use.' : task.by ? `Draft by ${task.by}. Review before use.` : 'Result', 'task-agent'));
       if(task.status==='review')reviewControls(task,article);else article.append(node('div', task.result, 'task-result'));
@@ -219,9 +219,9 @@
     server = info;
     tasks = list;
     const names = Object.keys(info.members).map(displayName).join(', ');
-    el('taskNote').textContent = info.mode === 'gemini'
-      ? `${names} works with Gemini and submits bounded outputs for review when approval is required.`
-      : `${names} is connected in deterministic dry-run mode. The workflow is real; generated content is placeholder output until Gemini/Vertex AI is configured.`;
+    el('taskNote').textContent = info.mode !== 'dry-run'
+      ? `${names} uses the configured live AI provider and submits bounded outputs for review when approval is required.`
+      : `${names} is running in deterministic demo mode. Tasks still execute safely, but generated content is not a live Gemini response. Configure Gemini in Settings to enable live AI.`;
     el('saveNote').textContent = 'Saved on the Organa server. Export tasks to keep a copy.';
     render();
     tasks.filter(t => t.status === 'active' && team.some(person => person.n === t.assignee)).forEach(t => changed(t.assignee));
@@ -281,7 +281,7 @@
         }
         el('taskTitle').value = ''; el('taskBrief').value = '';
         el('agentFilter').value = 'all'; el('taskFilter').value = 'all';
-        render(); feedback(`Task added for ${displayName(task.assignee)}${agentFor(task.assignee) ? '. The AI agent will pick it up.' : '.'}`); el('taskTitle').focus();
+        render(); feedback(`Task added for ${displayName(task.assignee)}${agentFor(task.assignee) ? (server?.mode==='dry-run'?'. It will run in deterministic demo mode because live AI is not connected.':'. The live AI agent will pick it up.') : '.'}`); el('taskTitle').focus();
       };
       el('taskTitle').oninput = () => el('taskTitle').setCustomValidity('');
       el('exportTasks').onclick = () => {

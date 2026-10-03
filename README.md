@@ -138,7 +138,14 @@ Open:
 http://localhost:3000
 ```
 
-If no Google credentials are configured, Organa automatically runs in deterministic dry-run mode. This is intentional and still exercises the real company, task, meeting, deliverable, approval and event state machines.
+If no live AI credentials are configured, Organa automatically runs in deterministic dry-run mode. This is intentional and still exercises the real company, task, meeting, deliverable, approval and event state machines. The app now shows this mode explicitly in the sidebar, AI-powered surfaces, Tasks, and AI Settings so users are never expected to infer whether a live model is connected.
+
+For Gemini there are two supported authentication paths:
+
+- **Vertex AI**: service-account JSON (`GOOGLE_APPLICATION_CREDENTIALS`, inline JSON, or base64 JSON) or Application Default Credentials / a Cloud Run runtime service account.
+- **Gemini Developer API**: server-side `GEMINI_API_KEY`.
+
+A provider that is selected but cannot authenticate returns an actionable provider/setup error instead of a generic server 500.
 
 ### Choose the LLM provider
 
@@ -333,6 +340,6 @@ See `docs/HACKATHON_IMPLEMENTATION.md` and `docs/SPEC_TRACEABILITY.md` for archi
 
 The public landing page is served at `/`. The interactive Organa workspace is available at `/app` and `/workspace`.
 
-All landing-page **Get Started** calls to action link to `/app?onboarding=1`. This opens Mission Control directly in the company-creation flow so a new user can describe what they are building, review the proposed North Star and AI team, and explicitly approve activation.
+All landing-page **Get Started** calls to action link to `/app?onboarding=1`. This opens a focused four-step setup flow beside the live workspace: **Outcome → Team design → Review → Activate**. The onboarding surface becomes interactive immediately without waiting for the 3D office to finish loading, keeps the app navigation usable, provides recoverable timeout/error states, and removes the onboarding query after activation so the user lands cleanly in the live office.
 
 The landing-page **Watch demo / Watch Video** controls open an accessible in-page video modal using `public/assets/landing/organa-demo.mp4`.

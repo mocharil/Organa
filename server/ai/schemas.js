@@ -68,9 +68,19 @@ const moderatorSchema = {
     unresolvedQuestions: stringArray, actionItems: {type: 'array', items: {type: 'object'}}, deliverable: {type: 'object'}},
   required: ['summary', 'agreements', 'disagreements', 'recommendations', 'decisions', 'unresolvedQuestions', 'actionItems', 'deliverable'],
 };
+const standupItemSchema = {type: 'object', properties: {summary: scalar('string'), ref: scalar('string')}, required: ['summary', 'ref']};
+const standupAttentionItemSchema = {type: 'object', properties: {priority: {type: 'string', enum: ['low', 'medium', 'high']}, summary: scalar('string'), ref: scalar('string')}, required: ['priority', 'summary', 'ref']};
 const standupSchema = {
-  type: 'object', properties: {headline: scalar('string'), completed: {type: 'array', items: {type: 'object'}}, decisions: {type: 'array', items: {type: 'object'}}, needsAttention: {type: 'array', items: {type: 'object'}}, blockers: {type: 'array', items: {type: 'object'}}, next: {type: 'array', items: {type: 'object'}}, usageSummary: {type: ['string', 'null']}},
-  required: ['headline', 'completed', 'decisions', 'needsAttention', 'blockers', 'next'],
+  type: 'object', properties: {
+    headline: scalar('string'),
+    completed: {type: 'array', items: standupItemSchema},
+    decisions: {type: 'array', items: standupItemSchema},
+    needsAttention: {type: 'array', items: standupAttentionItemSchema},
+    blockers: {type: 'array', items: standupItemSchema},
+    next: {type: 'array', items: standupItemSchema},
+    usageSummary: scalar('string'),
+  },
+  required: ['headline', 'completed', 'decisions', 'needsAttention', 'blockers', 'next', 'usageSummary'],
 };
 
 module.exports = {specialistResponseSchema, companyProposalSchema, agentDesignSchema, planSchema, participantSchema, moderatorSchema, standupSchema};
