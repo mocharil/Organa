@@ -2,10 +2,19 @@
   'use strict';
   const $ = id => document.getElementById(id);
   const status = message => { $('sceneStatus').textContent = message; };
-  if (!window.THREE) { status('The 3D office failed to load. Check your internet connection, then reload.'); return; }
+  // Setup is interactive before spending CPU/GPU time constructing the office.
+  if (new URLSearchParams(location.search).get('onboarding') === '1') {
+    await new Promise(resolve => document.addEventListener('organa:onboarding-exit', resolve, {once:true}));
+  }
+  const unavailable = message => {
+    status(message);
+    document.body.classList.remove('organa-loading');
+    if ($('organaBootSplash')) $('organaBootSplash').hidden = true;
+  };
+  if (!window.THREE) { unavailable('The 3D office could not load. Your workspace remains available from the navigation.'); return; }
   let renderer;
   try { renderer = new THREE.WebGLRenderer({canvas: $('c'), antialias: true}); }
-  catch { status('This browser cannot display WebGL yet. Try a browser with graphics acceleration.'); return; }
+  catch { unavailable('The 3D office needs graphics acceleration. Your workspace remains available from the navigation.'); return; }
   // Initials and floor signage are drawn into canvases, so the web fonts must be ready first.
   await Promise.race([
     Promise.all(['700 20px "IBM Plex Mono"', '600 60px "Plus Jakarta Sans"'].map(font => document.fonts.load(font))).catch(() => {}),
@@ -939,7 +948,7 @@
     rig.cue=mesh(new THREE.CylinderGeometry(.012,.02,1.45,8),BALSA,0,-.3,0,rig.arms[1].elbow,false);rig.cue.visible=false;
     const bubble=new THREE.Sprite(bubbleMaterial);bubble.scale.set(.75,.45,1);bubble.center.set(-.3,-.1);bubble.visible=false;g.add(bubble);
     const label=document.createElement('button');label.className='name-label';label.type='button';label.textContent=person.initials;
-    label.title=`${person.initials}, ${person.role}`;label.setAttribute('aria-label',`View ${person.initials}, ${person.role}`);$('labels').append(label);
+    label.title=`${person.n}, ${person.role}`;label.setAttribute('aria-label',`View ${person.n}, ${person.role}`);$('labels').append(label);
     const desk=desks[person.n];g.position.set(desk.x,0,desk.z);g.rotation.y=facing(desk);floors[3].add(g);
     const aisle=desk.route[0][0],stretchZ=desk.z-desk.f*.95;
     const stretchSpot={x:desk.x,z:stretchZ,f:desk.f,floor:3,route:[[aisle,P3],[aisle,stretchZ]],state:'stretch',local:true,label:'Standing up'};
@@ -1506,6 +1515,7 @@
     status(`${message}${held?` ${held} coworker${held===1?' is':'s are'} staying with live work.`:''}`);log(message);
   }
   function commandMembers(members, action, options={}) {
+    if(!members.length){status('Choose at least one coworker before sending an instruction.');return;}
     if(!options.force)members=members.filter(a=>!a.workState||['idle','completed'].includes(a.workState));
     if(!members.length){status(options.force?'No matching coworkers are available.':'Those coworkers are currently controlled by live work. Pick someone who is available.');return;}
     let spots;
@@ -1522,7 +1532,7 @@
       if(action==='meet')assign(a,spots[i],Infinity);
       else setPath(a,action==='work'?a.desk:spots[i]);
     });
-    const names=members.map(a=>a.initials).join(', ');
+    const names=members.map(a=>a.n).join(', ');
     const destination={meet:'the meeting room',lunch:'lunch',roof:'the rooftop',work:'their desks'}[action];
     const message=`${names} heading to ${destination}.`;
     status(message+(action==='meet'?' Use Back to work to end the meeting.':''));log(message,members[0].group);
@@ -1531,12 +1541,12 @@
     const section=document.createElement('section');section.className='member-commands';
     const label=document.createElement('label');label.htmlFor='iScope';label.textContent='Send instructions to';
     const scope=document.createElement('select');scope.id='iScope';
-    for(const [value,text] of [['person',agent.initials],['division',GROUPS[agent.group].name],['custom','Choose people…']]){
+    for(const [value,text] of [['person',agent.n],['division',GROUPS[agent.group].name],['custom','Choose people…']]){
       const option=document.createElement('option');option.value=value;option.textContent=text;scope.append(option);
     }
     const people=document.createElement('fieldset');people.id='iPeople';people.hidden=true;
     const legend=document.createElement('legend');legend.textContent='People to include';people.append(legend);
-    for(const a of agents){const row=document.createElement('label');row.className='check';const input=document.createElement('input');input.type='checkbox';input.value=a.n;input.checked=a===agent;row.append(input,`${a.initials} · ${a.role}`);people.append(row);}
+    for(const a of agents){const row=document.createElement('label');row.className='check';const input=document.createElement('input');input.type='checkbox';input.value=a.n;input.checked=a===agent;row.append(input,`${a.n} · ${a.role}`);people.append(row);}
     scope.onchange=()=>{people.hidden=scope.value!=='custom';};
     const actions=document.createElement('div');actions.className='member-actions';
     for(const [action,text] of [['meet','Meet together'],['lunch','Lunch'],['roof','Rooftop'],['work','Back to work']]){
@@ -1549,7 +1559,7 @@
     const task=taskForAgent(agent.n);
     agent.label.classList.toggle('has-task',!!task);
     const stateLabel={working:'Working',collaborating:'Collaborating',review:'Needs review',waiting:'Waiting',blocked:'Needs input',completed:'Completed',ready:'Ready'}[agent.workState]||'Available';
-    const description=`${agent.initials}, ${agent.role} · ${stateLabel}${task?`: ${task.title}`:''}`;
+    const description=`${agent.n}, ${agent.role} · ${stateLabel}${task?`: ${task.title}`:''}`;
     if(agent.label.title!==description){agent.label.title=description;agent.label.setAttribute('aria-label',`View ${description}`);}
     if(selected===agent&&$('iActiveTask')){
       const title=task?task.title:agent.workTitle||'No active task';
@@ -1592,11 +1602,11 @@
     agent.label.classList.add('selected');$('teamSelect').value=agent.n;
     const info=$('info');info.replaceChildren();
     const close=document.createElement('button');close.id='iClose';close.textContent='×';close.setAttribute('aria-label','Close details');close.onclick=()=>selectAgent(null);
-    const heading=document.createElement('h2');heading.textContent=agent.initials;
+    const heading=document.createElement('h2');heading.id='iName';heading.textContent=agent.n;info.setAttribute('aria-labelledby','iName');
     const role=document.createElement('p');role.className='role';role.textContent=agent.role;
     // Members connected to an AI agent on the server say so; everyone else stays a labelled simulation.
     const ai=window.officeTasks.agentFor(agent.n);
-    if(ai){const badge=document.createElement('span');badge.className='ai-badge';badge.textContent=ai.mode==='gemini'?`AI coworker · ${ai.model||'Gemini'}`:'AI coworker · dry run';role.append(badge);}
+    if(ai){const badge=document.createElement('span');badge.className='ai-badge';badge.textContent=ai.mode==='dry-run'?'AI coworker · demo output':`AI coworker · ${ai.model||ai.mode}`;role.append(badge);}
     const list=document.createElement('dl');
     for(const [title,value,id] of [['Desk group',GROUPS[agent.group].name,''],['Location',FLOOR[agent.floor].name,'iLocation'],['Activity',agentStatus(agent),'iActivity']]){
       const dt=document.createElement('dt');dt.textContent=title;const dd=document.createElement('dd');dd.textContent=value;if(id)dd.id=id;list.append(dt,dd);
@@ -1612,9 +1622,9 @@
     const taskBrief=document.createElement('p');taskBrief.id='iTaskBrief';
     taskSection.append(taskHeading,taskTitle,taskBrief,tasks);
     info.append(close,heading,role,taskSection,memberCommands(agent),list,pray,view);
-    syncTaskDisplay(agent);
+    info.scrollTop=0;syncTaskDisplay(agent);
   }
-  for(const agent of agents){const option=document.createElement('option');option.value=agent.n;option.textContent=`${agent.initials} · ${agent.role}`;$('teamSelect').append(option);}
+  for(const agent of agents){const option=document.createElement('option');option.value=agent.n;option.textContent=`${agent.n} · ${agent.role}`;$('teamSelect').append(option);}
   // Header faces: the first four members as initial chips in their desk-group colour, then the remaining count.
   for(const agent of agents.slice(0,4)){
     const face=document.createElement('button');face.className='face';face.textContent=agent.initials;face.style.setProperty('--dot',hex(GROUPS[agent.group].color));
@@ -1622,6 +1632,9 @@
   }
   {const more=document.createElement('span');more.className='face more';more.textContent=`+${agents.length-4}`;more.setAttribute('aria-hidden','true');$('teamFaces').append(more);}
   $('teamSelect').onchange=()=>{const a=agents.find(a=>a.n===$('teamSelect').value);selectAgent(a||null);if(a&&activeFloor!==0){a.g.getWorldPosition(cam.target);cam.radius=Math.max(32,28/camera.aspect);}};
+
+  const officeControls=$('controls');
+  if(officeControls&&window.ResizeObserver){new ResizeObserver(()=>{const height=Math.ceil(officeControls.getBoundingClientRect().height);if(height)document.documentElement.style.setProperty('--organa-office-controls-height',height+'px');}).observe(officeControls);}
 
   const cam={target:new THREE.Vector3(1,0,0),radius:62,theta:-.22,phi:.78,spin:0};
   function cameraFor(level){
@@ -1940,7 +1953,9 @@
   const projected=new THREE.Vector3(),world=new THREE.Vector3();let last=performance.now();
   function frame(now) {
     // Allow slower renderers to keep pace, while limiting jumps after a background-tab pause.
-    requestAnimationFrame(frame);const realDt=Math.min(.15,(now-last)/1000);last=now;const dt=paused?0:realDt;simTime+=dt;
+    requestAnimationFrame(frame);const realDt=Math.min(.15,(now-last)/1000);last=now;
+    if(document.body.classList.contains('organa-onboarding-mode'))return;
+    const dt=paused?0:realDt;simTime+=dt;
     if($('taskDialog').open){for(const k in keys)keys[k]=false;}
     if(transition&&!follow)stepTransition(realDt);
     if(!drag&&cam.spin){cam.theta+=cam.spin*realDt;cam.spin*=Math.pow(.03,realDt);if(Math.abs(cam.spin)<.01)cam.spin=0;}
@@ -1985,7 +2000,7 @@
       const badge=document.querySelector(`[data-floor="${level}"] .floor-count`);
       if(badge&&badge.textContent!==String(count)){badge.textContent=String(count);badge.setAttribute('aria-label',`${count} team members on this floor`);}
     }
-    renderer.render(scene,camera);
+    if(!document.body.classList.contains('organa-workspace-open')&&!document.querySelector('dialog:modal'))renderer.render(scene,camera);
   }
   // Capture the actual floor models once for the navigation previews.
   renderer.setSize(200,140,false);camera.aspect=200/140;camera.updateProjectionMatrix();

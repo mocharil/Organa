@@ -12,10 +12,11 @@ for (const route of ['overview','office','missions','team','meetings','knowledge
   assert(sidebarRoutes.includes(route), `missing global sidebar route: ${route}`);
 }
 
-const controlTabs = [...html.matchAll(/data-mc-tab="([^"]+)"/g)].map(m => m[1]);
-for (const tab of ['company','team','mission','meetings','knowledge','review','standup','goals','performance','settings']) {
-  assert(controlTabs.includes(tab), `missing Organization Control tab: ${tab}`);
-}
+const dialogMarkup = html.match(/<dialog id="missionDialog"[\s\S]*?<\/dialog>/)[0];
+assert(!dialogMarkup.includes('<nav'), 'Workspace popup must not repeat the app navigation.');
+assert(!dialogMarkup.includes('data-mc-tab'), 'Removed popup navigation must not remain in markup.');
+assert(ui.includes('window.OrganaWorkspace?.open(tab)'), 'Main navigation must use the workspace router directly.');
+assert(!mc.includes('data-mc-tab'), 'Workspace actions must not depend on removed popup tabs.');
 
 const expectedMappings = {
   overview:'company', missions:'mission', team:'team', meetings:'meetings', knowledge:'knowledge',
@@ -32,4 +33,4 @@ assert(mc.includes('knowledge:renderKnowledge'), 'Knowledge is not wired to its 
 assert(mc.includes('goals:renderGoals'), 'Goals is not wired to its renderer');
 assert(mc.includes('performance:renderPerformance'), 'Performance is not wired to its renderer');
 
-console.log('PASS: global sidebar and Organization Control navigation are integrated and route to matching dedicated views');
+console.log('PASS: one global sidebar routes directly to dedicated workspace views without popup navigation');

@@ -76,7 +76,7 @@ async function main() {
   const health = (await request('/api/health')).body;
   assert.equal(health.provider, 'dry-run');
   assert.equal(health.storage, 'json');
-  assert.equal(health.version, '3.18.0-organa');
+  assert.equal(health.version, `${require('../package.json').version}-organa`);
   const llmSettings = (await request('/api/llm/settings')).body;
   assert.equal(llmSettings.provider, 'dry-run');
   assert.ok(llmSettings.providers.some(p => p.id === 'vertex'));
@@ -227,7 +227,7 @@ async function main() {
   assert.ok(standup.snapshot.decisions.some(d => d.ref === `meeting:${meeting.id}`));
   assert.ok(standup.summary.headline);
   assert.ok(standup.summary.completed.length >= 1);
-  assert.equal(standup.generation.mode, 'ai');
+  assert.equal(standup.generation.mode, 'deterministic');
   assert.equal(standup.generation.degraded, false);
   const latestStandup = (await request('/api/standups/latest')).body;
   assert.equal(latestStandup.id, standup.id);

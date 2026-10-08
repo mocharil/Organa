@@ -1,0 +1,28 @@
+{
+  "version": "3.18.5",
+  "verifiedAt": "2026-10-05T03:22:54.814Z",
+  "passed": 19,
+  "checks": [
+    "Landing demo uses local video, branding and a reachable app link",
+    "Office boots with local assets and all canonical employees",
+    "Avatars have unique initials and roster-matched identities",
+    "Floor previews load from rendered local models",
+    "Ambient motion and pause controls reflect actual simulation state",
+    "All four floor controls reveal the selected floor and caption",
+    "Whole-building view and a model floor click work together",
+    "Employee selector opens the exact coworker details",
+    "Individual lunch command preserves the camera and targets one coworker",
+    "Division command only targets selected coworkers in that division",
+    "Custom command selects the requested people and enforces meeting capacity",
+    "Empty selection offers a useful message and no command runs",
+    "A coworker walks down the stairs to lunch while Tasks is open",
+    "Return to work reaches the coworker desk and keeps the camera",
+    "Task output review is linked to the real coworker in the office",
+    "Overview and Evaluation return to Office without a duplicate navigation panel",
+    "Office and coworker controls fit phone, tablet and desktop widths",
+    "Music starts, changes volume, and stops with explicit controls",
+    "Office, landing and modal journeys produce no uncaught browser errors"
+  ],
+  "mode": "deterministic-demo",
+  "uncaughtErrors": []
+}

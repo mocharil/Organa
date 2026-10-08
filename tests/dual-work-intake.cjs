@@ -23,7 +23,7 @@ async function waitForServer(){for(let i=0;i<80;i++){try{const health=await requ
   server=spawn(process.execPath,['server/server.js'],{cwd:ROOT,env:{...process.env,PORT:String(PORT),HOST:'127.0.0.1',DATA_DIR:dataDir,ENV_FILE:'/nonexistent',KANTOR_STORAGE:'json',KANTOR_DRY_RUN:'1',KANTOR_ENABLE_DEMO_RESET:'1',GEMINI_API_KEY:'',GOOGLE_API_KEY:'',GOOGLE_CLOUD_PROJECT:''},stdio:['ignore','pipe','pipe']});
   let stderr='';server.stderr.on('data',chunk=>{stderr+=chunk;});
   await waitForServer();
-  const health=await request('/api/health');assert.equal(health.version,'3.18.0-organa');assert.equal(health.ai.mode,'deterministic');
+  const health=await request('/api/health');assert.equal(health.version,`${require('../package.json').version}-organa`);assert.equal(health.ai.mode,'deterministic');
   await request('/api/demo/reset',{method:'POST',body:{}});
   const roster=(await request('/api/agents')).agents;const chief=roster.find(a=>/chief of staff/i.test(a.role));const specialist=roster.find(a=>a.status==='active'&&!/chief of staff/i.test(a.role));assert.ok(chief&&specialist,'demo roster should contain Chief of Staff and specialists');
 

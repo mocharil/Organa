@@ -14,7 +14,7 @@ class TaskWorker{
    const snapshot=JSON.parse(JSON.stringify(task));const inputDeliverables=(snapshot.dependencyIds||[]).map(dep=>state.tasks.find(t=>t.id===dep)?.deliverableId).filter(Boolean).map(del=>this.deliverableService.get(del)).filter(Boolean).map(d=>({...d,currentContent:d.versions?.find(v=>v.id===d.currentVersionId)?.content||''}));
    const prompt=prompts.specialist({agent,northStar,task:snapshot,inputDeliverables});
    const response=await this.provider.generate({provider:agent.modelPolicy?.provider,model:agent.modelPolicy?.defaultModel,...prompt,responseSchema:specialistResponseSchema,metadata:{action:'specialist',taskId:task.id,agentId},context:{agent,northStar,task:snapshot,inputDeliverables},maxOutputTokens:agent.modelPolicy?.maxOutputTokens||3500});
-   this.usageService.record(response,{agentId,projectId:task.projectId,taskId:task.id,purpose:'specialist'});
+   if(this.stateManager.get()!==state||state.activeCompanyId!==task.companyId)return;this.usageService.record(response,{agentId,projectId:task.projectId,taskId:task.id,purpose:'specialist'});
    const current=(state.tasks||[]).find(t=>t.id===task.id);if(!current||current.status!=='active'||current.runId!==runId||current.assigneeAgentId!==agentId)return;
    const data=response.data||{};const by=response.provider==='dry-run'?'dry-run':`${response.provider}:${response.model}`;
    if(data.status==='needs_input'){

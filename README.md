@@ -4,6 +4,14 @@
 
 Organa turns a company-level outcome into coordinated, reviewable work. A human owner defines the company North Star, hires or edits AI coworkers, gives the team a mission, and reviews the resulting decisions and deliverables. The existing Three.js office is the live operating surface, not just decoration: active AI coworkers populate the office, task state follows backend execution, and meeting participants visibly move to the Meeting Room.
 
+## Version 3.18.5
+
+This release rebuilds the available v3.18.2 source with recovered workflow fixes and a shared UI refresh. The missing v3.18.4 archive could not be recovered byte for byte; this is a new, tested replacement release.
+
+Workspace pages use one global navigation, readable cards, searchable collections, durable form drafts and responsive layouts. Team has Structure and People views; Tasks supports search and stable coworker selection; mission questions can be answered without creating a second mission. Approval source links open the exact work record. Overview and Performance popups do not repeat the sidebar.
+
+See [UI changes and screenshots](docs/UI_REFRESH_QA.md), [current verification results](docs/END_TO_END_QA.md), and [the local Gemini test guide](docs/LOCAL_LIVE_TEST.md).
+
 ## Design source of truth
 
 All product and marketing UI work must follow [`docs/ORGANA_MASTER_DESIGN_SYSTEM.md`](docs/ORGANA_MASTER_DESIGN_SYSTEM.md). It is the canonical visual reference for brand tokens, spacing, components, agent states, orbit/node interaction language, motion, accessibility, responsive behavior, and 3D-office styling. When older styles conflict with it, the master design system wins.
@@ -255,7 +263,16 @@ It verifies:
 - stand-up generation from real stored state
 - Mission Control static surface
 
-The older visual regression scripts still require Playwright and a browser runtime. They are not production dependencies.
+Browser checks require Playwright Chromium:
+
+```bash
+npx playwright install chromium
+npm run test:e2e:all
+```
+
+The four suites cover onboarding, workflows, the shared workspace UI, and Office. To use an existing Chromium binary, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to its absolute path. `npm run test:e2e:ui` and `npm run test:e2e:office` run the added suites individually.
+
+For Gemini configured locally, run `npm run test:live -- --preflight` and then `npm run test:live`. Preflight checks configuration without a model call. The live runner uses isolated test data, a persistent call budget, bounded output tokens, and redacted reports; it does not modify the running demo data. See the local guide before running it.
 
 ## Key API surface
 
@@ -280,6 +297,7 @@ POST /api/north-star/versions/:version/activate
 
 POST /api/projects/plan
 POST /api/projects/:id/activate-plan
+POST /api/projects/:id/answer
 GET  /api/projects/:id/graph
 
 GET  /api/tasks
@@ -340,6 +358,28 @@ See `docs/HACKATHON_IMPLEMENTATION.md` and `docs/SPEC_TRACEABILITY.md` for archi
 
 The public landing page is served at `/`. The interactive Organa workspace is available at `/app` and `/workspace`.
 
-All landing-page **Get Started** calls to action link to `/app?onboarding=1`. This opens a focused four-step setup flow beside the live workspace: **Outcome → Team design → Review → Activate**. The onboarding surface becomes interactive immediately without waiting for the 3D office to finish loading, keeps the app navigation usable, provides recoverable timeout/error states, and removes the onboarding query after activation so the user lands cleanly in the live office.
+All landing-page **Get Started** calls to action link to `/app?onboarding=1`. The guided setup has four stages: **Start → Configure → Review → Activate**. Build from an outcome or select any of five starter teams. Both paths create editable drafts and require explicit approval before activation.
+
+Setup fields, template selection, reviewed names, role titles, and included coworkers are saved in `sessionStorage` for the current browser tab. Refresh, retry, **Back to setup**, and an AI Settings detour keep that draft. **Save & exit** returns to the workspace; **Continue setup** reopens the same draft. If browser storage is blocked, the flow still works and explains that the tab must stay open.
+
+The server preserves the requested outcome and hard constraints in both live and deterministic modes. Every active team retains one Chief of Staff, unique coworker names, and valid reporting lines. `clientRequestId` makes proposal retries idempotent; activation retries return the same organization, including after restart. Review can clear the optional vision, edit company direction, and exclude specialists without silently restoring previous values.
+
+The completion screen confirms the activated organization and offers **Enter my office** or **Create my first mission**. The latter carries the approved first outcome into the mission brief. The 3D office is constructed after onboarding exits, uses the new server roster, and never blocks access to the rest of the workspace when WebGL is unavailable. App fonts and Three.js r128 are bundled locally, with their licenses.
+
+See [the onboarding QA report](docs/ONBOARDING_QA.md) for the bug log, screenshots, verification scope, and reproduction commands.
+
+## Team, meetings, and stand-up
+
+Every workspace section, including **Overview** and **Performance / evaluation**, uses the single main app navigation. Workspace panels and task popups do not repeat the sidebar. Mobile navigation keeps all sections reachable; a stored collapsed-sidebar preference adapts to the bottom navigation.
+
+**Overview** shows persisted organization totals and supports North Star edits as reviewed draft versions before activation. Failed saves and activation requests remain recoverable. **Performance** uses recorded tasks, deliverables, and model calls, shows mission completion, and exposes each coworker's saved evaluation criteria.
+
+In **Team**, design a draft employee, review the profile and reporting line, then explicitly hire them. Employee names are unique, required profile fields and list types are validated, and the Chief of Staff retains the coordination role. Hiring retries with the same `clientRequestId` return the same draft, including after restart. Archive repairs active reporting lines and protects unfinished work. Archived profiles remain available for review, editing, and restoration.
+
+In **Meetings**, the start button explains unfinished dependencies or unavailable participants. Every selected specialist must be active. The review page includes independent contributions, recommendations, disagreements, and the persisted decision record. **Request revision** collects feedback inline; the next round receives that feedback and the previous decision. Reviews use the current approval identity, so an old approval cannot authorize a revised result. An interrupted meeting becomes retryable after server restart.
+
+**Morning Stand-up** summarizes stored tasks, meeting decisions, approvals, and blockers. Repeated or unknown source refs are removed, pending approvals keep their priority, and usage totals come from recorded calls. Source actions open the corresponding work area; task links focus the exact saved task and result in the work queue. Deterministic demo briefs are labeled separately from live summaries; a provider failure produces a clearly labeled verified fallback. Pending requests preserve busy state and their completion does not replace a different selected page.
+
+See [the workflow QA report](docs/WORKFLOWS_QA.md) for the complete tested path, fixes, screenshots, and commands.
 
 The landing-page **Watch demo / Watch Video** controls open an accessible in-page video modal using `public/assets/landing/organa-demo.mp4`.

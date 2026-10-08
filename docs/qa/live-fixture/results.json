@@ -1,0 +1,86 @@
+{
+  "version": "3.18.5",
+  "provider": "dry-run",
+  "fixture": true,
+  "liveExecutionVerified": false,
+  "startedAt": "2026-10-05T03:14:13.349Z",
+  "limits": {
+    "maxCalls": 30,
+    "maxTokens": 8192,
+    "timeoutMinutes": 20
+  },
+  "checks": [
+    {
+      "name": "Health uses the selected provider and isolated JSON storage",
+      "passed": true
+    },
+    {
+      "name": "Company and reviewed team are available",
+      "passed": true
+    },
+    {
+      "name": "Direct instruction executes and returns a reviewable result",
+      "passed": true
+    },
+    {
+      "name": "Retry of the same instruction keeps one task",
+      "passed": true
+    },
+    {
+      "name": "Task revision keeps draft history",
+      "passed": true
+    },
+    {
+      "name": "Current task output requires human approval",
+      "passed": true
+    },
+    {
+      "name": "Knowledge retains the approved deliverable and provenance",
+      "passed": true
+    },
+    {
+      "name": "Chief of Staff produces a bounded mission plan",
+      "passed": true
+    },
+    {
+      "name": "Plan retry returns the same saved project",
+      "passed": true
+    },
+    {
+      "name": "Activation retry preserves task and meeting identities",
+      "passed": true
+    },
+    {
+      "name": "Mission tasks execute in dependency order and each draft is reviewed",
+      "passed": true
+    },
+    {
+      "name": "A cross-functional meeting produces a decision for review",
+      "passed": true
+    },
+    {
+      "name": "Approval Center confirms the exact meeting decision",
+      "passed": true
+    },
+    {
+      "name": "Previously resolved approval cannot approve another version",
+      "passed": true
+    },
+    {
+      "name": "Stand-up has verified links to saved work",
+      "passed": true
+    },
+    {
+      "name": "Usage and events record provider-backed execution",
+      "passed": true
+    },
+    {
+      "name": "Restart retains task results, meeting decisions, stand-up and budget",
+      "passed": true
+    }
+  ],
+  "completedAt": "2026-10-05T03:14:15.480Z",
+  "passed": 17,
+  "modelCallsReserved": 0,
+  "success": true
+}

@@ -11,3 +11,6 @@ service-account*.json
 gcp-key*.json
 .credentials/
 secrets/
+
+# Isolated local test reports may contain private work.
+.local-qa/

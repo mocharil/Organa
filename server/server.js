@@ -24,7 +24,7 @@ const {MeetingService}=require('./services/meeting-service');
 const {StandupService}=require('./services/standup-service');
 const {id,now,activeAgents}=require('./services/helpers');
 
-const TYPES={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.mp4':'video/mp4','.webm':'video/webm','.json':'application/json','.ico':'image/x-icon'};
+const TYPES={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.mp4':'video/mp4','.webm':'video/webm','.json':'application/json','.ico':'image/x-icon','.woff2':'font/woff2','.txt':'text/plain; charset=utf-8'};
 const send=(res,status,body)=>{res.writeHead(status,{'content-type':'application/json; charset=utf-8','cache-control':'no-store'});res.end(JSON.stringify(body));};
 const text=(value,max)=>typeof value==='string'?value.trim().slice(0,max):'';
 function readJson(req){return new Promise((resolve,reject)=>{let size=0;const chunks=[];req.on('data',chunk=>{size+=chunk.length;if(size>2e6){reject(Object.assign(new Error('Request too large'),{status:413}));req.destroy();}else chunks.push(chunk);});req.on('end',()=>{try{resolve(JSON.parse(Buffer.concat(chunks).toString()||'{}'));}catch{reject(Object.assign(new Error('Invalid JSON'),{status:400}));}});});}
@@ -41,14 +41,14 @@ async function buildRuntime(){
  const stateManager=new StateManager(store);await stateManager.init();normalizeState(stateManager.get());await stateManager.persist();
  const provider=createProvider(config,stateManager);const eventService=new EventService(stateManager);const usageService=new UsageService(stateManager);const companyService=new CompanyService({stateManager});const northStarService=new NorthStarService({stateManager,eventService});const deliverableService=new DeliverableService({stateManager,eventService});const approvalService=new ApprovalService({stateManager,eventService});const orchestrationService=new OrchestrationService({stateManager,provider,eventService,usageService,config});const agentService=new AgentService({stateManager,provider,eventService,usageService,config});const bootstrapService=new BootstrapService({stateManager,provider,eventService,usageService,config});const taskService=new TaskService({stateManager,eventService,deliverableService,approvalService,orchestrationService});const taskWorker=new TaskWorker({stateManager,provider,eventService,usageService,deliverableService,approvalService,orchestrationService,config});taskService.setKick(taskWorker.kick);const meetingService=new MeetingService({stateManager,provider,eventService,usageService,deliverableService,approvalService,config});const standupService=new StandupService({stateManager,provider,eventService,usageService,config});
  // Recover interrupted task runs after a process restart.
- let reset=false;for(const task of stateManager.get().tasks){if(task.status==='active'){task.status='queued';task.runId=null;task.version=(task.version||0)+1;task.updatedAt=now();reset=true;}}if(reset)await stateManager.persist();
+ let reset=false;for(const task of stateManager.get().tasks){if(task.status==='active'){task.status='queued';task.runId=null;task.version=(task.version||0)+1;task.updatedAt=now();reset=true;}}for(const meeting of stateManager.get().meetings||[]){if(['in_progress','synthesizing'].includes(meeting.status)){meeting.status='failed';meeting.error='The server restarted during this meeting. Retry to finish the decision record.';meeting.updatedAt=now();eventService.append('meeting.failed',{companyId:meeting.companyId,entity:{type:'meeting',id:meeting.id},room:'meeting_room',payload:{participants:meeting.participantAgentIds,error:meeting.error}});reset=true;}}if(reset)await stateManager.persist();
  return{stateManager,provider,storageMode,eventService,usageService,companyService,northStarService,deliverableService,approvalService,orchestrationService,agentService,bootstrapService,taskService,taskWorker,meetingService,standupService};
 }
 
 async function api(runtime,req,res,url){
  const {stateManager,provider,storageMode,eventService,usageService,companyService,northStarService,deliverableService,approvalService,orchestrationService,agentService,bootstrapService,taskService,taskWorker,meetingService,standupService}=runtime;
  const body=async()=>readJson(req);
- if(url.pathname==='/api/health'&&req.method==='GET'){const llm=provider.settings();return send(res,200,{status:'ok',version:'3.18.0-organa',provider:provider.name,model:provider.model,plannerModel:provider.plannerModel,storage:storageMode,companyId:stateManager.companyId(),cloudReady:Boolean(config.googleCloudProject),ai:llm.runtime,timestamp:now()});}
+ if(url.pathname==='/api/health'&&req.method==='GET'){const llm=provider.settings();return send(res,200,{status:'ok',version:`${require('../package.json').version}-organa`,provider:provider.name,model:provider.model,plannerModel:provider.plannerModel,storage:storageMode,companyId:stateManager.companyId(),cloudReady:Boolean(config.googleCloudProject),ai:llm.runtime,timestamp:now()});}
  if(url.pathname==='/api/llm/settings'&&req.method==='GET')return send(res,200,provider.settings());
  if(url.pathname==='/api/llm/settings'&&req.method==='PATCH')return send(res,200,await provider.configure(await body()));
  if(url.pathname==='/api/company'&&req.method==='GET')return send(res,200,{company:companyService.get(),northStar:northStarService.get()});
@@ -63,7 +63,7 @@ async function api(runtime,req,res,url){
  if(url.pathname==='/api/agents'&&req.method==='GET'){
   const list=agentService.list({includeDrafts:url.searchParams.get('includeDrafts')==='1'});const members=Object.fromEntries(agentService.roster().map(a=>[a.displayName,{id:a.id,role:a.role,model:a.model,division:a.division,group:a.group}]));const llm=provider.settings();return send(res,200,{mode:provider.name,model:provider.model,ai:llm.runtime,members,roster:agentService.roster(),agents:list});
  }
- if(url.pathname==='/api/agents/design'&&req.method==='POST'){const input=await body();return send(res,201,await agentService.design(input.request));}
+ if(url.pathname==='/api/agents/design'&&req.method==='POST'){const input=await body();return send(res,201,await agentService.design(input?.request,input||{}));}
  m=url.pathname.match(/^\/api\/agents\/([^/]+)$/);if(m&&req.method==='GET'){const a=agentService.get(m[1]);return a?send(res,200,a):send(res,404,{error:'Agent not found.'});}if(m&&req.method==='PATCH')return send(res,200,await agentService.patch(m[1],await body()));
  m=url.pathname.match(/^\/api\/agents\/([^/]+)\/(activate|pause|archive)$/);if(m&&req.method==='POST')return send(res,200,await agentService.setStatus(m[1],m[2]==='activate'?'active':m[2]==='pause'?'paused':'archived'));
 
@@ -77,6 +77,7 @@ async function api(runtime,req,res,url){
  if(url.pathname==='/api/projects/plan'&&req.method==='POST')return send(res,201,await orchestrationService.plan(await body()));
  m=url.pathname.match(/^\/api\/projects\/([^/]+)$/);if(m&&req.method==='GET'){const p=orchestrationService.get(m[1]);return p?send(res,200,p):send(res,404,{error:'Project not found.'});}
  m=url.pathname.match(/^\/api\/projects\/([^/]+)\/graph$/);if(m&&req.method==='GET')return send(res,200,orchestrationService.graph(m[1]));
+ m=url.pathname.match(/^\/api\/projects\/([^/]+)\/answer$/);if(m&&req.method==='POST')return send(res,200,await orchestrationService.answer(m[1],await body()));
  m=url.pathname.match(/^\/api\/projects\/([^/]+)\/activate-plan$/);if(m&&req.method==='POST'){const result=await orchestrationService.activate(m[1]);setImmediate(taskWorker.kick);return send(res,200,result);}
 
  if(url.pathname==='/api/tasks'&&req.method==='GET')return send(res,200,taskService.list());
@@ -90,14 +91,14 @@ async function api(runtime,req,res,url){
  if(url.pathname==='/api/meetings'&&req.method==='GET')return send(res,200,meetingService.list());
  m=url.pathname.match(/^\/api\/meetings\/([^/]+)$/);if(m&&req.method==='GET'){const meeting=meetingService.get(m[1]);return meeting?send(res,200,meeting):send(res,404,{error:'Meeting not found.'});}
  m=url.pathname.match(/^\/api\/meetings\/([^/]+)\/start$/);if(m&&req.method==='POST')return send(res,200,await meetingService.start(m[1]));
- m=url.pathname.match(/^\/api\/meetings\/([^/]+)\/(approve|request-revision)$/);if(m&&req.method==='POST'){const input=await body();return send(res,200,await meetingService.approve(m[1],m[2]==='approve',input.note||input.feedback||''));}
+ m=url.pathname.match(/^\/api\/meetings\/([^/]+)\/(approve|request-revision)$/);if(m&&req.method==='POST'){const input=await body();return send(res,200,await meetingService.approve(m[1],m[2]==='approve',input.note||input.feedback||'',input.expectedApprovalId||null));}
 
  if(url.pathname==='/api/deliverables'&&req.method==='GET')return send(res,200,deliverableService.list());
  m=url.pathname.match(/^\/api\/deliverables\/([^/]+)$/);if(m&&req.method==='GET'){const d=deliverableService.get(m[1]);return d?send(res,200,d):send(res,404,{error:'Deliverable not found.'});}
  m=url.pathname.match(/^\/api\/deliverables\/([^/]+)\/why$/);if(m&&req.method==='GET')return send(res,200,deliverableService.why(m[1]));
 
  if(url.pathname==='/api/approvals'&&req.method==='GET')return send(res,200,approvalService.list(url.searchParams.get('status')||undefined));
- m=url.pathname.match(/^\/api\/approvals\/([^/]+)\/(approve|reject|request-revision)$/);if(m&&req.method==='POST'){const input=await body(),a=approvalService.get(m[1]);if(!a)return send(res,404,{error:'Approval not found.'});if(a.entityType==='task'){const task=taskService.get(a.entityId);if(!task)return send(res,404,{error:'Linked task not found.'});if(m[2]==='approve')return send(res,200,await taskService.review(task.id,{action:'approve',version:task.version}));return send(res,200,await taskService.review(task.id,{action:'revise',feedback:input.note||input.feedback||'Please revise this output.',version:task.version}));}if(a.entityType==='meeting')return send(res,200,await meetingService.approve(a.entityId,m[2]==='approve',input.note||input.feedback||''));const resolved=approvalService.resolve(a.id,m[2]==='approve'?'approved':'rejected',input.note||'');await stateManager.persist();return send(res,200,resolved);}
+ m=url.pathname.match(/^\/api\/approvals\/([^/]+)\/(approve|reject|request-revision)$/);if(m&&req.method==='POST'){const input=await body(),a=approvalService.get(m[1]);if(!a)return send(res,404,{error:'Approval not found.'});if(a.status!=='pending'||(input.expectedVersion!==undefined&&Number(input.expectedVersion)!==a.version))return send(res,409,{error:'This approval changed. Review the latest decision.'});if(a.entityType==='task'){const task=taskService.get(a.entityId);if(!task)return send(res,404,{error:'Linked task not found.'});if(a.status!=='pending')return send(res,409,{error:'This approval was already resolved. Review the latest task output.'});if(m[2]==='approve')return send(res,200,await taskService.review(task.id,{action:'approve',version:task.version}));return send(res,200,await taskService.review(task.id,{action:'revise',feedback:input.note||input.feedback||'Please revise this output.',version:task.version}));}if(a.entityType==='meeting')return send(res,200,await meetingService.approve(a.entityId,m[2]==='approve',input.note||input.feedback||'',a.id));const resolved=approvalService.resolve(a.id,m[2]==='approve'?'approved':'rejected',input.note||'');await stateManager.persist();return send(res,200,resolved);}
 
  if(url.pathname==='/api/events'&&req.method==='GET')return send(res,200,eventService.list({after:url.searchParams.get('after')||undefined,type:url.searchParams.get('type')||undefined,limit:Number(url.searchParams.get('limit')||200)}));
  if(url.pathname==='/api/standups/latest'&&req.method==='GET')return send(res,200,standupService.latest());

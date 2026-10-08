@@ -14,11 +14,24 @@
     settings: 'settings'
   };
   const mission = document.getElementById('missionDialog');
-  const missionButton = document.getElementById('bMission');
+  const taskDialog = document.getElementById('taskDialog');
+  const sidebar = document.getElementById('appSidebar');
+  const mobileMenu = document.getElementById('organaMobileMenu');
+  let taskReturnRoute = 'office';
+  function closeMenu() { sidebar?.classList.remove('mobile-menu-open'); mobileMenu?.setAttribute('aria-expanded', 'false'); }
+  mobileMenu?.addEventListener('click', () => { const open = sidebar.classList.toggle('mobile-menu-open'); mobileMenu.setAttribute('aria-expanded', String(open)); });
+  document.addEventListener('keydown', event => { if (event.key === 'Escape' && sidebar?.classList.contains('mobile-menu-open')) { event.preventDefault(); event.stopImmediatePropagation(); closeMenu(); mobileMenu.focus(); } }, true);
+  document.addEventListener('click', event => { if (!sidebar?.contains(event.target)) closeMenu(); });
+  taskDialog?.addEventListener('close', () => { if (document.querySelector('[data-organa-route="tasks"]')?.getAttribute('aria-current')) setActive(mission?.open ? taskReturnRoute : 'office'); });
   const routeButtons = [...document.querySelectorAll('[data-organa-route]')];
 
   function setActive(route) {
-    routeButtons.forEach(button => button.classList.toggle('active', button.dataset.organaRoute === route));
+    routeButtons.forEach(button => {
+      const active = button.dataset.organaRoute === route;
+      button.classList.toggle('active', active);
+      if (active) button.setAttribute('aria-current', 'page');
+      else button.removeAttribute('aria-current');
+    });
   }
 
   const aiStatus = document.getElementById('organaAiStatus');
@@ -53,13 +66,8 @@
   }
 
   function openMissionTab(tab, route) {
-    missionButton?.click();
-    const choose = () => {
-      const tabButton = document.querySelector(`[data-mc-tab="${tab}"]`);
-      if (tabButton) tabButton.click();
-      setActive(route);
-    };
-    setTimeout(choose, 40);
+    setActive(route);
+    window.OrganaWorkspace?.open(tab);
   }
 
   aiStatus?.addEventListener('click', () => openMissionTab('settings', 'settings'));
@@ -70,6 +78,8 @@
   routeButtons.forEach(button => {
     button.addEventListener('click', () => {
       const route = button.dataset.organaRoute;
+      closeMenu();
+      if (route === 'tasks') { taskReturnRoute = document.querySelector('[data-organa-route][aria-current="page"]')?.dataset.organaRoute || 'office'; window.officeTasks?.open(); setActive('tasks'); return; }
       const tab = routes[route];
       if (route === 'office') {
         if (mission?.open) mission.close();
@@ -82,7 +92,9 @@
   });
 
   document.getElementById('organaNotifications')?.addEventListener('click', () => openMissionTab('review', 'approvals'));
-  mission?.addEventListener('close', () => setActive('office'));
+  mission?.addEventListener('close', () => { if (!mission.open) setActive('office'); });
+  routeButtons.forEach(button => button.setAttribute('aria-label', button.textContent.trim()));
+  setActive('office');
 })();
 
 // Branded progressive loading copy. The 3D scene owns when the splash closes.

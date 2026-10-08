@@ -1,3 +1,45 @@
+# Changelog
+
+## 3.18.5 — UI refresh and source recovery
+
+Rebuilt from the available v3.18.2 archive after the later workspace source was unavailable. This release is a tested replacement, not a byte-for-byte restoration of v3.18.4.
+
+- Shared readable workspace styling, mobile All pages navigation, searchable collections, Team People view, structured document rendering and reduced-motion loading.
+- One global navigation across Overview, Performance and the other workspace panels; native Tasks retains its parent workspace.
+- Company-scoped workflow drafts; stable request identities for missions, tasks and North Star versions; retry and failed-save recovery; dependency-safe reassignment and rename-safe selections.
+- Mission clarification answers update the same plan, retain history and survive retries/restart. Mission activation preserves navigation when its request finishes.
+- Approval source links, inline revision feedback and stale-approval validation; failed task review/answer/retry saves retain pending work and dependencies, and North Star activation rolls back on storage failure.
+- Full coworker names in Office, accurate provider badges, clear empty-selection feedback and separate mobile detail/control areas.
+- Local isolated Gemini runner with bounded calls/output, partial cancellation reports, secret redaction and a fixture mode that never claims live execution.
+
+See `docs/END_TO_END_QA.md` for this release's actual checks and remaining verification scope.
+
+## v3.18.2 · Workspace, Team, Meeting, and Stand-up Reliability
+
+- Validated employee fields, unique names, coordinator continuity, reporting changes, and model policies; made hiring retries idempotent.
+- Protected running work and repaired reports when a manager is archived; kept saved names, initials, and 3D avatar gender consistent.
+- Required every selected meeting participant to be active, verified contribution identity, and rejected malformed model responses.
+- Passed owner revision feedback and the previous decision into the next meeting round; prevented old approval IDs from approving revised results.
+- Made meeting review retries safe, rolled back failed decision writes, and recovered interrupted meetings after server restart.
+- Preserved stand-up source coverage, priority, and recorded usage; included failed meetings and revision work; coalesced concurrent generation.
+- Kept pending UI requests busy without overwriting another selected view; exposed meeting contributions, decision records, inline revisions, and stand-up source actions.
+- Removed popup sidebars and routed all workspace views through the single main navigation, including mobile and collapsed-sidebar layouts.
+- Added Overview loading recovery, preserved North Star draft review and activation retries, and verified Performance totals and saved evaluation criteria.
+- Kept meeting/evaluation details open through background refresh and focused stand-up task links on their exact saved record.
+- Improved mobile forms, profile selection, task layout, credential cards, and access to every workspace section.
+- Added 15 workflow API/service groups and 30 workflow browser scenarios, with screenshots and a QA report; reran the 24 onboarding scenarios.
+
+## v3.18.1 · Onboarding Reliability and UI
+
+- Unified landing and workspace organization creation behind one guided setup.
+- Saved setup and review edits across refresh, retry, navigation, and AI Settings detours in the same browser tab.
+- Preserved owner-supplied goals and constraints in scratch, template, and deterministic-mode proposals.
+- Added draft request deduplication, idempotent activation, bounded input validation, unique names, coordinator validation, repaired reporting lines, and storage-failure rollback.
+- Reworked setup for desktop and mobile with compact progress, selectable template cards, labeled coworker fields, inline validation, clear recovery actions, and a completion screen.
+- Deferred 3D construction until setup exits, bundled the existing renderer and fonts, and kept navigation usable when WebGL is unavailable.
+- Passed the first approved outcome into Missions and protected in-progress form edits from background refresh.
+- Added automated API and browser onboarding regression coverage, a dependency lockfile, and a QA report with screenshots.
+
 ## v3.18 — Dual Work Intake
 
 - Added two explicit work-entry paths in Missions: **Ask Chief of Staff** for automatic planning/routing and **Assign to AI Employee** for direct ownership.

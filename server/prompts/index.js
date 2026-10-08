@@ -28,17 +28,17 @@ function specialist({agent, northStar, task, inputDeliverables}) {
   };
 }
 
-function meetingParticipant({agent, agenda, northStar, inputs}) {
+function meetingParticipant({agent, agenda, northStar, inputs, reviewNote = '', previousResult = null}) {
   return {
     system: `You are ${agent.role} participating in a bounded cross-functional meeting in Organa. Provide your independent professional contribution from your role's perspective. Do not pretend the group has agreed. Do not fabricate evidence. Return only structured JSON.`,
-    messages: [{role: 'user', content: `AGENDA:\n${agenda}\n\nCOMPANY NORTH STAR:\n${json(northStar)}\n\nINPUT EVIDENCE:\n${json(inputs)}`}],
+    messages: [{role: 'user', content: `AGENDA:\n${agenda}\n\nCOMPANY NORTH STAR:\n${json(northStar)}\n\nINPUT EVIDENCE:\n${json(inputs)}\n\nOWNER REVISION REQUEST:\n${reviewNote || 'None'}\n\nPREVIOUS DECISION:\n${json(previousResult)}`}],
   };
 }
 
-function meetingModerator({agenda, northStar, contributions, outputContract}) {
+function meetingModerator({agenda, northStar, contributions, outputContract, reviewNote = '', previousResult = null}) {
   return {
     system: `You moderate a bounded multi-agent meeting in Organa. Preserve important disagreements and uncertainty. Base synthesis only on supplied contributions/evidence. Separate decisions, recommendations, assumptions and unresolved questions. Mark high-impact decisions for human approval. Return only structured JSON.`,
-    messages: [{role: 'user', content: `AGENDA:\n${agenda}\n\nCOMPANY NORTH STAR:\n${json(northStar)}\n\nPARTICIPANT CONTRIBUTIONS:\n${json(contributions)}\n\nOUTPUT CONTRACT:\n${json(outputContract || {})}`}],
+    messages: [{role: 'user', content: `AGENDA:\n${agenda}\n\nCOMPANY NORTH STAR:\n${json(northStar)}\n\nPARTICIPANT CONTRIBUTIONS:\n${json(contributions)}\n\nOUTPUT CONTRACT:\n${json(outputContract || {})}\n\nOWNER REVISION REQUEST:\n${reviewNote || 'None'}\n\nPREVIOUS DECISION:\n${json(previousResult)}`}],
   };
 }
 

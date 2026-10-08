@@ -5,14 +5,15 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Organa · AI Organization OS</title>
   <link rel="icon" type="image/png" href="favicon.png?v=4">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="app-fonts.css">
   <link rel="stylesheet" href="organa-design-system.css">
   <link rel="stylesheet" href="office.css">
   <link rel="stylesheet" href="tasks.css">
   <link rel="stylesheet" href="mission-control.css">
   <link rel="stylesheet" href="organa-theme.css">
+  <link rel="stylesheet" href="onboarding.css">
+  <link rel="stylesheet" href="workflows.css">
+  <link rel="stylesheet" href="workspace-ui.css">
 </head>
 <body class="ui organa-loading">
   <canvas id="c" aria-label="Interactive model of a four-floor AI workplace"></canvas>
@@ -33,11 +34,12 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg>
       </button>
     </div>
-    <nav class="organa-nav">
+    <nav id="organaMainNavigation" class="organa-nav" aria-label="Workspace pages">
       <span class="organa-nav-section">Workspace</span>
       <button data-organa-route="overview"><svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5V21H3z"/><path d="M9 21v-6h6v6"/></svg><span>Overview</span></button>
       <button data-organa-route="office" class="active"><svg viewBox="0 0 24 24"><path d="M4 21V4h11v17M15 9h5v12M2 21h20M8 8h3M8 12h3M8 16h3"/></svg><span>Office</span></button>
       <button data-organa-route="missions"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M16 8l5-5M17 3h4v4"/></svg><span>Missions</span></button>
+      <button data-organa-route="tasks"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5h12M8 12h12M8 19h12M3 5h1M3 12h1M3 19h1"/></svg><span>Tasks</span></button>
       <button data-organa-route="team"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-4 2.5-6 6-6s6 2 6 6"/><path d="M16 6a3 3 0 0 1 0 6M17 14c2.5.4 4 2.1 4 5"/></svg><span>Team</span></button>
       <button data-organa-route="meetings"><svg viewBox="0 0 24 24"><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="7" r="2.5"/><circle cx="12" cy="17" r="2.5"/><path d="M9 8.5l2 5M15 8.5l-2 5"/></svg><span>Meetings</span></button>
       <button data-organa-route="knowledge"><svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H12v17H6.5A2.5 2.5 0 0 0 4 22z"/><path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H12v17h5.5A2.5 2.5 0 0 1 20 22z"/></svg><span>Knowledge</span></button>
@@ -52,9 +54,11 @@
       <span class="organa-live-dot"></span>
       <div class="organa-sidebar-status-copy">
         <span>Organization online<br>Human authority retained</span>
+        <button id="organaResumeOnboarding" class="organa-resume-setup" type="button" hidden>Continue setup →</button>
         <button id="organaAiStatus" class="organa-ai-status" type="button" aria-label="Open AI settings">AI · checking…</button>
       </div>
     </div>
+    <button id="organaMobileMenu" type="button" aria-controls="organaMainNavigation" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span>All pages</span></button>
   </aside>
   <header id="header">
     <div class="workspace-summary">
@@ -63,7 +67,7 @@
       <span id="workspaceGoal">Set a North Star, then give the organization an outcome.</span>
     </div>
     <div class="header-card">
-      <div class="team-picker"><label for="teamSelect">Team member</label><select id="teamSelect"><option value="">Pick initials</option></select></div>
+      <div class="team-picker"><label for="teamSelect">Team member</label><select id="teamSelect"><option value="">Choose a coworker</option></select></div>
       <div id="teamFaces" aria-label="Team members"></div>
       <button id="bLog" class="btn" aria-controls="log" aria-expanded="true">Activity</button>
       <button id="bMission" class="btn mission-btn">Mission Control</button>
@@ -75,10 +79,10 @@
   <nav id="floors" aria-label="Choose a floor">
     <p class="nav-title">Building section</p>
     <div class="section-stack">
-      <button data-floor="4"><span class="floor-number">FL.04</span><span>Rooftop<small>Fresh air & breaks</small></span></button>
-      <button data-floor="3" aria-pressed="true"><span class="floor-number">FL.03</span><span>Workspace<small>The whole team</small></span></button>
-      <button data-floor="2"><span class="floor-number">FL.02</span><span>Kitchen & dining<small>Shared tables</small></span></button>
-      <button data-floor="1"><span class="floor-number">FL.01</span><span>Barber & parking<small>Entrance</small></span></button>
+      <button data-floor="4"><span class="floor-number">FL.04</span><span data-short="Roof">Rooftop<small>Fresh air & breaks</small></span></button>
+      <button data-floor="3" aria-pressed="true"><span class="floor-number">FL.03</span><span data-short="Work">Workspace<small>The whole team</small></span></button>
+      <button data-floor="2"><span class="floor-number">FL.02</span><span data-short="Dining">Kitchen & dining<small>Shared tables</small></span></button>
+      <button data-floor="1"><span class="floor-number">FL.01</span><span data-short="Entry">Barber & parking<small>Entrance</small></span></button>
     </div>
     <button data-floor="0" class="building-button">View whole building</button>
   </nav>
@@ -111,7 +115,7 @@
   </footer>
   <p id="cameraHint">Drag to rotate · Shift + drag or right-click to pan · Scroll or pinch to zoom · Arrow keys to rotate</p>
   <dialog id="taskDialog" aria-labelledby="taskHeading">
-    <header class="task-header"><div><h1 id="taskHeading">Work queue</h1><p>Assign focused work or let your Chief of Staff decompose a company-level mission.</p></div><button type="button" id="closeTasks">Close</button></header>
+    <header class="task-header"><div><h1 id="taskHeading">Work queue</h1><p>Assign work, review drafts, and keep your team moving.</p></div><button type="button" id="closeTasks">Close</button></header>
     <p class="task-note" id="taskNote">Connecting to the Organa runtime…</p>
     <p id="taskFeedback" role="status" aria-live="polite"></p>
     <div class="task-layout">
@@ -121,6 +125,7 @@
         <button class="task-primary" type="submit">Add task</button><p class="task-note" id="saveNote">Connecting to persistence…</p><button type="button" id="exportTasks">Export tasks</button>
       </form>
       <section aria-labelledby="taskListHeading"><h2 id="taskListHeading">Task list</h2>
+        <label class="task-search-label" for="taskSearch">Search tasks</label><input id="taskSearch" type="search" placeholder="Find a title, instruction, or owner">
         <div class="task-filters"><div><label for="taskFilter">Status</label><select id="taskFilter"><option value="all">All statuses</option><option value="planned">Planned</option><option value="waiting_dependency">Waiting on dependency</option><option value="queued">Queued</option><option value="active">In progress</option><option value="blocked">Needs decision</option><option value="review">Needs review</option><option value="failed">Failed</option><option value="done">Done</option></select></div><div><label for="agentFilter">Assignee</label><select id="agentFilter"><option value="all">All characters</option></select></div></div>
         <p id="taskSummary"></p><div id="taskList"></div>
       </section>
@@ -134,27 +139,17 @@
       <button type="button" id="closeMission" class="mc-close">Close</button>
     </header>
     <div class="mc-shell">
-      <nav class="mc-tabs" aria-label="Organization Control sections">
-        <button data-mc-tab="company" class="active">Overview</button>
-        <button data-mc-tab="team">Team</button>
-        <button data-mc-tab="mission">Missions</button>
-        <button data-mc-tab="meetings">Meetings</button>
-        <button data-mc-tab="knowledge">Knowledge</button>
-        <button data-mc-tab="review">Approvals</button>
-        <button data-mc-tab="standup">Stand-up</button>
-        <button data-mc-tab="goals">Goals</button>
-        <button data-mc-tab="performance">Performance</button>
-        <button data-mc-tab="settings">Settings</button>
-      </nav>
       <main id="mcContent" class="mc-content" tabindex="-1"></main>
     </div>
     <p id="mcStatus" class="mc-status" role="status" aria-live="polite"></p>
   </dialog>
+  <script src="workspace-components.js"></script>
   <script src="tasks.js"></script>
+  <script src="onboarding.js"></script>
   <script src="mission-control.js"></script>
   <script src="organa-ui.js"></script>
   <script src="music.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="vendor/three-r128.min.js"></script>
   <script src="office.js"></script>
 </body>
 </html>

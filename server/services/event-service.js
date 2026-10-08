@@ -1,9 +1,9 @@
 const crypto = require('node:crypto');
 class EventService {
   constructor(stateManager) { this.stateManager = stateManager; }
-  append(type, {actor = {type:'system', id:'organa'}, entity = null, goalIds = [], projectId = null, room = null, payload = {}} = {}) {
-    const state = this.stateManager.get(), companyId = state.activeCompanyId;
-    const event = {id: `evt_${crypto.randomUUID()}`, companyId, type, actor, entity, goalIds, projectId, room, payload, createdAt: new Date().toISOString()};
+  append(type, {companyId = null, actor = {type:'system', id:'organa'}, entity = null, goalIds = [], projectId = null, room = null, payload = {}} = {}) {
+    const state = this.stateManager.get();
+    const event = {id: `evt_${crypto.randomUUID()}`, companyId: companyId ?? state.activeCompanyId, type, actor, entity, goalIds, projectId, room, payload, createdAt: new Date().toISOString()};
     state.events ||= []; state.events.push(event);
     if (state.events.length > 2000) state.events.splice(0, state.events.length - 2000);
     return event;

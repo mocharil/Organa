@@ -1,0 +1,46 @@
+{
+  "version": "3.18.5",
+  "verifiedAt": "2026-10-05T03:28:00.131033+00:00",
+  "mode": "deterministic-demo",
+  "syntaxCheck": "passed",
+  "npmTestExitCode": 0,
+  "nodeTestGroups": {
+    "onboardingAPI": 12,
+    "workflowsAPI": 15,
+    "recoveryRegressions": 20,
+    "liveRunnerGuards": 7
+  },
+  "legacyCoreScripts": [
+    "multi-provider configuration, service-account inference, runtime switching and per-agent routing",
+    "company builder, dynamic hiring, Chief of Staff DAG, dependency execution, multi-agent meeting, provenance, approvals, stand-up and Mission Control API flow",
+    "verified task and meeting state drives the 3D office digital twin, while ambient motion is isolated to idle coworkers",
+    "one global sidebar routes directly to dedicated workspace views without popup navigation",
+    "AI Team hierarchy renders reporting structure and prevents invalid manager cycles",
+    "stand-up survives provider failures, preserves verified provenance, and returns actionable workspace errors",
+    "no-LLM mode stays usable, live-AI setup is explicit, and provider auth failures are actionable",
+    "dual work intake supports Chief of Staff auto-routing and governed direct AI employee assignment",
+    "onboarding deep-link remains interactive, recoverable, and exits cleanly after activation"
+  ],
+  "browserSuites": {
+    "onboarding": {
+      "passed": 24,
+      "report": "docs/qa/onboarding/onboarding-e2e-results.json"
+    },
+    "workflows": {
+      "passed": 30,
+      "report": "docs/qa/workflows/workflows-e2e-results.json"
+    },
+    "ui": {
+      "passed": 14,
+      "report": "docs/qa/ui/workspace-ui-results.json"
+    },
+    "office": {
+      "passed": 19,
+      "report": "docs/qa/office/office-ui-results.json"
+    }
+  },
+  "browserScenariosTotal": 87,
+  "layoutCombinationsWithinUISuite": 50,
+  "liveFixtureHTTPFlows": 17,
+  "liveExecutionVerified": false
+}

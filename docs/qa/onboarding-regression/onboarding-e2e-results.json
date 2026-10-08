@@ -1,0 +1,32 @@
+{
+  "passed": 24,
+  "checks": [
+    "Landing Get Started opens interactive onboarding with local assets",
+    "Both starting paths fit the mobile screen without horizontal overflow",
+    "Required outcome, raw input persistence and demo mode are clear",
+    "A generation failure retains the brief and retries with the same request ID",
+    "Review enforces a coordinator, validates unique names and records selected coworkers",
+    "Review edits survive Back to setup, return to review and reload",
+    "An activation error preserves every review edit and excluded role",
+    "A lost activation response can be retried without creating a duplicate organization",
+    "The completion screen survives refresh and remains usable on mobile",
+    "First mission handoff loads the new organization and the live 3D roster",
+    "Template loading errors offer an immediate retry without losing customization",
+    "All five templates can be customized, reviewed and activated in the browser",
+    "Switching start paths preserves shared input and template choice across reloads",
+    "A changed brief retried after failure generates a new draft instead of returning the old one",
+    "Save and exit preserves URL parameters, and Continue setup restores the draft",
+    "Setup and review stay within the viewport at phone, tablet and desktop widths",
+    "Storage restrictions do not prevent setup and reduced motion stops decorative animation",
+    "AI Settings offers a visible return path and preserves the setup draft",
+    "An actual request timeout keeps the brief and allows a safe draft retry",
+    "Unavailable 3D graphics never leave a blocking loading screen after onboarding",
+    "A draft removed from the server can be recreated from the saved brief",
+    "Malformed template data is recoverable and does not crash the builder",
+    "Live provider errors offer settings recovery while keeping the organization brief",
+    "No uncaught browser errors across all onboarding scenarios"
+  ],
+  "browser": "143.0.7499.0",
+  "mode": "deterministic",
+  "uncaughtErrors": []
+}

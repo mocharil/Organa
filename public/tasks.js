@@ -5,7 +5,14 @@
   let tasks = [], team = [], changed, locate;
   let storageHealthy = true;
   let mutation=0,polling=false,writing=0;
-  const drafts=new Map();
+  const drafts=new Map(),busyTasks=new Set();
+  let creating=false;
+  const identity=person=>person.agentId||person.id||server?.members?.[person.n]?.id||person.n;
+  function assigneeDraft(task){const raw=draftRead('assignee:'+task.id);try{return JSON.parse(raw)||null;}catch{return null;}}
+  function assignmentPicker(task){const wrap=node('div',undefined,'task-assign-row'),select=node('select');select.setAttribute('aria-label',`New assignee for ${task.title}`);select.id=`assign-${task.id}`;for(const person of team){const option=node('option',person.n);option.value=identity(person);select.append(option);}const draft=assigneeDraft(task),value=draft?.id||task.assigneeAgentId||identity(team.find(person=>person.n===task.assignee)||{n:task.assignee});if(!team.some(person=>identity(person)===value)){const option=node('option',`${draft?.name||task.assignee} · unavailable`);option.value=value;option.disabled=true;select.prepend(option);}select.value=value;select.onchange=()=>{const person=team.find(person=>identity(person)===select.value);draftWrite('assignee:'+task.id,JSON.stringify({id:select.value,name:person?.n||select.value}));};const move=action('Move task',()=>reassign(task.id,select.value));move.disabled=busyTasks.has(task.id);wrap.append(select,move);return wrap;}
+  function taskBusy(id,busy){if(busy)busyTasks.add(id);else busyTasks.delete(id);el('taskList').querySelector(`[data-task-id="${CSS.escape(id)}"]`)?.querySelectorAll('button').forEach(button=>button.disabled=busy);}
+  function syncRoster(info){const previous=el('taskAssignee').value,previousId=identity(team.find(person=>person.n===previous)||{n:previous}),filter=el('agentFilter').value;team=(info.roster||[]).map(person=>({...person,agentId:person.id}));server=info;for(const id of ['taskAssignee','agentFilter']){const select=el(id);select.replaceChildren();if(id==='agentFilter'){const all=node('option','All coworkers');all.value='all';select.append(all);}for(const person of team){const option=node('option',`${person.n} · ${person.role}`);option.value=person.n;select.append(option);}}el('taskAssignee').value=team.find(person=>identity(person)===previousId)?.n||team[0]?.n||'';el('agentFilter').value=team.some(person=>person.n===filter)?filter:'all';}
+
   const draftKey=(task,kind)=>`${kind}:${task.id}:${kind==='result'?'result':(task.version||0)}`;
   function draftRead(key){if(drafts.has(key))return drafts.get(key);try{return sessionStorage.getItem('kantor-draft:'+key)||'';}catch{return '';}}
   function draftWrite(key,value){drafts.set(key,value);try{sessionStorage.setItem('kantor-draft:'+key,value);}catch{feedback('Draft is kept in this tab only; browser storage is unavailable.');}}
@@ -13,7 +20,7 @@
 
   // With the server running, tasks live there and some members are AI agents; without it, tasks stay in this browser.
   let server = null;
-  const displayName = name => team.find(person => person.n === name)?.initials || name;
+  const displayName = name => team.find(person => person.n === name)?.n || name;
   const agentFor = name => server?.members[name] ? {...server.members[name], mode: server.mode} : null;
 
   function feedback(message) { el('taskFeedback').textContent = message; }
@@ -68,14 +75,14 @@
   }
   async function update(id, status, result = '') {
     const task = tasks.find(t => t.id === id);
-    if (!task) return;
+    if (!task||busyTasks.has(id)) return;
     if (status === 'active' && tasks.some(t => t.id !== id && t.assignee === task.assignee && t.status === 'active')) {
       feedback(`${displayName(task.assignee)} already has an active task. Move it back to the queue or finish it first.`);
       return;
     }
     if (server) {
-      try { const saved = await call('PATCH', `/api/tasks/${id}`, {status, result}); apply(tasks.map(t => t.id === id ? saved : t)); }
-      catch (error) { feedback(error.message); return; }
+      taskBusy(id,true);try { const saved = await call('PATCH', `/api/tasks/${id}`, {status, result}); apply(tasks.map(t => t.id === id ? saved : t)); }
+      catch (error) { feedback(error.message); return; }finally{taskBusy(id,false);}
     } else {
       const next = tasks.map(t => t.id === id ? {...t, status, result, updatedAt: new Date().toISOString()} : t);
       if (!persist(next)) return;
@@ -85,30 +92,32 @@
     render(); feedback(`Task status: ${states[status]}.`);
     el('taskFilter').focus();
   }
-  async function reassign(id, assignee) {
-    if (!team.some(person => person.n === assignee)) return;
-    if (server) {
-      try { const saved = await call('PATCH', `/api/tasks/${id}`, {assignee}); apply(tasks.map(t => t.id === id ? saved : t)); }
-      catch (error) { feedback(error.message); return; }
-    } else {
-      const next = tasks.map(task => task.id === id ? {...task, assignee, status: task.status === 'done' ? 'done' : 'queued'} : task);
-      if (!persist(next)) return;
-    }
-    render(); feedback(`Task moved to ${displayName(assignee)}.`);
+  async function reassign(id, selectedId) {
+    const target=team.find(person=>identity(person)===selectedId||person.n===selectedId);
+    if(!target){feedback('This coworker is no longer active. Choose an available owner.');return;}
+    if(busyTasks.has(id))return;
+    const key='assignee:'+id,submitted=draftRead(key);taskBusy(id,true);
+    try{
+      if(server){const saved=await call('PATCH',`/api/tasks/${id}`,{assignee:identity(target)});apply(tasks.map(task=>task.id===id?saved:task));}
+      else if(!persist(tasks.map(task=>task.id===id?{...task,assignee:target.n,status:['done','cancelled'].includes(task.status)?task.status:'queued'}:task)))return;
+      if(draftRead(key)===submitted)draftClear(key);
+      render();feedback(`Task moved to ${target.n}.`);
+    }catch(error){feedback(error.message);}
+    finally{taskBusy(id,false);}
   }
   async function reviewTask(task,action,comments=''){
-    try{
+    if(busyTasks.has(task.id))return;taskBusy(task.id,true);const key=draftKey(task,'review'),submitted=draftRead(key);try{
       if(server){const saved=await call('PATCH',`/api/tasks/${task.id}`,{action,feedback:comments,version:task.version||0});apply(tasks.map(t=>t.id===task.id?saved:t));}
       else{
         const next=tasks.map(t=>t.id===task.id?{...t,status:action==='approve'?'done':'queued',feedback:comments,version:(t.version||0)+1,updatedAt:new Date().toISOString()}:t);
         if(!persist(next))return;
         changed(task.assignee,action==='approve'?'done':'queued',task.title);
       }
-      draftClear(draftKey(task,'review'));render();feedback(action==='approve'?'Draft approved.':'Revision requested. The previous draft stays in history.');
-    }catch(error){feedback(error.message);}
+      if(draftRead(key)===submitted)draftClear(key);render();feedback(action==='approve'?'Draft approved.':'Revision requested. The previous draft stays in history.');
+    }catch(error){feedback(error.message);}finally{taskBusy(task.id,false);}
   }
   function reviewControls(task,article){
-    article.append(node('div',task.result,'task-result'));
+    article.append(window.OrganaUI.documentView(task.result,'task-result'));
     const approve=action('Approve & finish',()=>reviewTask(task,'approve'));approve.className='task-primary';article.append(approve);
     const form=node('form'),label=node('label','Revision comments'),input=node('textarea'),key=draftKey(task,'review');
     input.id=`review-${task.id}`;label.htmlFor=input.id;input.required=true;input.maxLength=5000;input.rows=3;input.value=draftRead(key);
@@ -118,11 +127,13 @@
   }
   // An agent that asked instead of guessing: show its questions and take the answers.
   async function answerTask(task,answer){
-    try{const saved=await call('PATCH',`/api/tasks/${task.id}`,{action:'answer',answer,version:task.version||0});apply(tasks.map(t=>t.id===task.id?saved:t));draftClear(draftKey(task,'answer'));render();feedback(`Answer sent. ${displayName(task.assignee)} picks the task up again.`);}
-    catch(error){feedback(error.message);}
+    if(busyTasks.has(task.id))return;taskBusy(task.id,true);const key=draftKey(task,'answer'),submitted=draftRead(key);try{const saved=await call('PATCH',`/api/tasks/${task.id}`,{action:'answer',answer,version:task.version||0});apply(tasks.map(t=>t.id===task.id?saved:t));if(draftRead(key)===submitted)draftClear(key);render();feedback(`Answer sent. ${displayName(task.assignee)} picks the task up again.`);}
+    catch(error){feedback(error.message);}finally{taskBusy(task.id,false);}
   }
   function answerControls(task,article){
-    article.append(node('p',`${displayName(task.assignee)} needs more information before drafting:`,'task-agent'),node('div',task.questions,'task-result task-questions'));
+    const questions=node('ul',undefined,'task-result task-questions');
+    for(const question of Array.isArray(task.questions)?task.questions:[task.questions].filter(Boolean))questions.append(node('li',question));
+    article.append(node('p',`${displayName(task.assignee)} needs more information before drafting:`,'task-agent'),questions);
     const form=node('form'),label=node('label','Your answer'),input=node('textarea'),key=draftKey(task,'answer');
     input.id=`answer-${task.id}`;label.htmlFor=input.id;input.required=true;input.maxLength=3000;input.rows=3;input.value=draftRead(key);
     input.oninput=()=>{input.setCustomValidity('');draftWrite(key,input.value);};
@@ -142,12 +153,13 @@
     else if (task.status === 'active') article.append(node('p', agent.mode !== 'dry-run' ? 'The configured AI agent is working on this…' : 'Deterministic demo run in progress…', 'task-agent'));
     else {
       article.append(node('p', task.by === 'dry-run' ? 'Dry run result, not AI output. Review before use.' : task.by ? `Draft by ${task.by}. Review before use.` : 'Result', 'task-agent'));
-      if(task.status==='review')reviewControls(task,article);else article.append(node('div', task.result, 'task-result'));
+      if(task.status==='review')reviewControls(task,article);else article.append(window.OrganaUI.documentView(task.result,'task-result'));
     }
     article.append(actions);
   }
   const announce = () => document.dispatchEvent(new CustomEvent('officetasks:change'));
   function render() {
+    const expanded=new Set([...el('taskList').querySelectorAll('article details[open]')].map(details=>details.closest('article').dataset.taskId));
     const focused=el('taskList').contains(document.activeElement)&&document.activeElement.tagName==='TEXTAREA'?{id:document.activeElement.id,start:document.activeElement.selectionStart,end:document.activeElement.selectionEnd}:null;
     announce();
     const list = el('taskList'); list.replaceChildren();
@@ -155,25 +167,27 @@
     el('taskCount').textContent = tasks.length - done;
     el('taskSummary').textContent = `${tasks.length} tasks · ${done} done`;
     el('exportTasks').disabled = tasks.length === 0;
-    const visible = tasks.filter(t => (el('taskFilter').value === 'all' || t.status === el('taskFilter').value) &&
+    const query=(el('taskSearch')?.value||'').toLowerCase().trim();
+    const visible = tasks.filter(t => (!query||`${t.title} ${t.brief} ${t.assignee}`.toLowerCase().includes(query)) && (el('taskFilter').value === 'all' || t.status === el('taskFilter').value) &&
       (el('agentFilter').value === 'all' || t.assignee === el('agentFilter').value));
     if (!visible.length) list.append(node('p', tasks.length ? 'No tasks match this filter.' : 'No tasks yet. Add the first job for your team.', 'task-empty'));
     for (const task of visible) {
       const article = node('article', undefined, 'task-item');
+      article.dataset.taskId=task.id;
       const agent = agentFor(task.assignee);
       article.append(node('h3', task.title), node('div', `${displayName(task.assignee)} · ${states[task.status]}${agent ? ` · AI agent${agent.mode === 'gemini' ? ` · ${agent.model}` : ''}` : ''}`, 'task-meta'));
       if (task.brief) article.append(node('p', task.brief));
-      if(task.history?.length){const history=node('details'),summary=node('summary',`Draft history (${task.history.length})`);history.append(summary);task.history.forEach((draft,i)=>{history.append(node('h4',`Draft ${i+1} · ${draft.by||'Saved'}`));if(draft.feedback)history.append(node('p',`Revision brief: ${draft.feedback}`));history.append(node('div',draft.result,'task-result'));});article.append(history);}
+      if(task.history?.length){const history=node('details'),summary=node('summary',`Draft history (${task.history.length})`);history.append(summary);task.history.forEach((draft,i)=>{history.append(node('h4',`Draft ${i+1} · ${draft.by||'Saved'}`));if(draft.feedback)history.append(node('p',`Revision brief: ${draft.feedback}`));history.append(window.OrganaUI.documentView(draft.result,'task-result'));});article.append(history);}
+      if(expanded.has(task.id))article.querySelector('details')?.setAttribute('open','');
       const actions = node('div', undefined, 'task-actions');
       if (!team.some(person => person.n === task.assignee)) {
         article.append(node('p', 'This assignee comes from an old prototype. Pick a team member to continue.'));
-        const select = node('select'); select.setAttribute('aria-label', `New assignee for ${task.title}`);
-        for (const person of team) { const option = node('option', displayName(person.n)); option.value = person.n; select.append(option); }
-        actions.append(action('Move task', () => reassign(task.id, select.value)));
-        if (task.result) article.append(node('div', task.result, 'task-result'));
+        const select=assignmentPicker(task);
+        if (task.result) article.append(window.OrganaUI.documentView(task.result,'task-result'));
         article.append(select, actions); list.append(article); continue;
       }
-      actions.append(action('Show character', () => { el('taskDialog').close(); locate(task.assignee); }));
+      if(server&&['queued','waiting_dependency','blocked','failed'].includes(task.status))article.append(assignmentPicker(task));
+      actions.append(action('Show character', () => { el('taskDialog').close(); const workspace=el('missionDialog');if(workspace?.open)workspace.close();locate(task.assignee); }));
       if (agent) { agentActions(task, article, actions); list.append(article); continue; }
       if(task.status==='review'){reviewControls(task,article);article.append(actions);list.append(article);continue;}
       if (task.status === 'queued') actions.append(action('Start task', () => update(task.id, 'active')));
@@ -195,11 +209,12 @@
         input.oninput = () => {input.setCustomValidity('');draftWrite(key,input.value);};
         article.append(actions, form);
       } else {
-        if (task.status === 'done') article.append(node('div', task.result, 'task-result'));
+        if (task.status === 'done') article.append(window.OrganaUI.documentView(task.result,'task-result'));
         article.append(actions);
       }
       list.append(article);
     }
+    for(const id of busyTasks)taskBusy(id,true);
     if(focused){const input=document.getElementById(focused.id);if(input){input.focus({preventScroll:true});input.setSelectionRange(focused.start,focused.end);}}
   }
   // Look for the server once at start. A static host (or no server) keeps the browser-only behaviour.
@@ -216,22 +231,18 @@
     if (!list.length && storageHealthy && tasks.length) {
       list = await call('POST', '/api/tasks/import', tasks).then(imported => { feedback(`${imported.length} tasks from this browser moved to the server.`); return imported; }).catch(() => list);
     }
-    server = info;
+    syncRoster(info);
     tasks = list;
-    const names = Object.keys(info.members).map(displayName).join(', ');
-    el('taskNote').textContent = info.mode !== 'dry-run'
-      ? `${names} uses the configured live AI provider and submits bounded outputs for review when approval is required.`
-      : `${names} is running in deterministic demo mode. Tasks still execute safely, but generated content is not a live Gemini response. Configure Gemini in Settings to enable live AI.`;
+    el('taskNote').textContent=info.mode!=='dry-run'?'Live AI is selected. Your team returns task outputs for review.':'Demo output is active. Your team can execute tasks and save results. Connect Gemini in Settings for live AI.';
     el('saveNote').textContent = 'Saved on the Organa server. Export tasks to keep a copy.';
     render();
     tasks.filter(t => t.status === 'active' && team.some(person => person.n === t.assignee)).forEach(t => changed(t.assignee));
     document.dispatchEvent(new CustomEvent('officetasks:server', {detail: info}));
     setInterval(async () => {
       if(polling||writing)return;polling=true;const ticket=mutation;
-      const latest = await call('GET', '/api/tasks').catch(() => null);
+      const [latest,info]=await Promise.all([call('GET','/api/tasks').catch(()=>null),call('GET','/api/agents').catch(()=>null)]);
       polling=false;if(ticket!==mutation)return;
-      if (!latest || JSON.stringify(latest) === JSON.stringify(tasks)) return;
-      apply(latest);render();
+      if(!latest)return;const changedRoster=info&&JSON.stringify(info.members)!==JSON.stringify(server?.members),changedTasks=JSON.stringify(latest)!==JSON.stringify(tasks);if(!changedRoster&&!changedTasks)return;if(info)syncRoster(info);apply(latest);render();
     }, 2500);
   }
   window.officeTasks = {
@@ -239,14 +250,26 @@
     list: () => tasks.map(t => ({...t})),
     agentFor,
     open(name, status = 'all') {
+      el('taskSearch').value='';
       if (name) el('taskAssignee').value = name;
-      el('agentFilter').value = name || 'all';
+      el('agentFilter').value = [...el('agentFilter').options].some(option=>option.value===name)?name:'all';
       el('taskFilter').value = status; render();
-      el('taskDialog').showModal();
-      el('taskTitle').focus();
+      if(!el('taskDialog').open)el('taskDialog').showModal();
+      el('taskSearch').focus();
+    },
+    async openTask(id) {
+      try{
+        if(server)apply(await call('GET','/api/tasks'));
+        const task=tasks.find(item=>item.id===id);
+        this.open(task?.assignee,'all');
+        if(!task){feedback('This task is no longer available. Review the current work queue.');return;}
+        feedback('');
+        const record=el('taskList').querySelector(`[data-task-id="${CSS.escape(id)}"]`);
+        if(record){record.tabIndex=-1;record.scrollIntoView({block:'start'});record.focus({preventScroll:true});}
+      }catch(error){this.open();feedback(error.message);}
     },
     init(people, onChange, onLocate) {
-      team = people; changed = onChange; locate = onLocate;
+      team = people.map(person=>({...person})); changed = onChange; locate = onLocate;
       for (const person of team) {
         for (const id of ['taskAssignee', 'agentFilter']) {
           const option = node('option', `${displayName(person.n)} · ${person.role}`); option.value = person.n; el(id).append(option);
@@ -265,23 +288,27 @@
         const option = node('option', `${name} (old prototype)`); option.value = name; el('agentFilter').append(option);
       }
       el('closeTasks').onclick = () => el('taskDialog').close();
-      el('taskFilter').onchange = render; el('agentFilter').onchange = render;
+      el('taskFilter').onchange = render; el('agentFilter').onchange = render;el('taskSearch').oninput=render;
+      const savedCreation=draftRead('creation');try{const data=JSON.parse(savedCreation);if(data){el('taskTitle').value=data.title||'';el('taskBrief').value=data.brief||'';}}catch{}
+      const saveCreation=()=>draftWrite('creation',JSON.stringify({title:el('taskTitle').value,brief:el('taskBrief').value,assignee:el('taskAssignee').value}));for(const id of ['taskTitle','taskBrief','taskAssignee'])el(id).addEventListener('input',saveCreation);
       el('taskForm').onsubmit = async event => {
         event.preventDefault();
-        const title = el('taskTitle').value.trim();
+        if(creating)return;const title = el('taskTitle').value.trim();
         if (!title) { el('taskTitle').setCustomValidity('Enter a task name.'); el('taskTitle').reportValidity(); return; }
         const draft = {title, assignee: el('taskAssignee').value, brief: el('taskBrief').value.trim(), status: 'queued', result: ''};
-        let task;
+        if(server){draft.assigneeAgentId=identity(team.find(person=>person.n===draft.assignee)||{n:draft.assignee});delete draft.assignee;}
+        const submitted=JSON.stringify({title:el('taskTitle').value,brief:el('taskBrief').value,assignee:el('taskAssignee').value}),signature=JSON.stringify(draft),requestKey='creation-request';let request;try{request=JSON.parse(draftRead(requestKey));}catch{}if(request?.signature!==signature){request={signature,id:crypto.randomUUID()};draftWrite(requestKey,JSON.stringify(request));}draft.clientRequestId=request.id;let task;creating=true;el('taskForm').querySelector('[type=submit]').disabled=true;try{
         if (server) {
-          try { task = await call('POST', '/api/tasks', draft); tasks = [task, ...tasks]; if (task.status !== 'queued') changed(task.assignee, task.status, task.title); }
+          try { task = await call('POST', '/api/tasks', draft); tasks = [task, ...tasks.filter(existing=>existing.id!==task.id)]; if (task.status !== 'queued') changed(task.assignee, task.status, task.title); }
           catch (error) { feedback(error.message); return; }
         } else {
           task = {id: crypto.randomUUID(), ...draft, createdAt: new Date().toISOString()};
           if (!persist([task, ...tasks])) return;
         }
-        el('taskTitle').value = ''; el('taskBrief').value = '';
+        if(JSON.stringify({title:el('taskTitle').value,brief:el('taskBrief').value,assignee:el('taskAssignee').value})===submitted){el('taskTitle').value='';el('taskBrief').value='';draftClear('creation');}
         el('agentFilter').value = 'all'; el('taskFilter').value = 'all';
         render(); feedback(`Task added for ${displayName(task.assignee)}${agentFor(task.assignee) ? (server?.mode==='dry-run'?'. It will run in deterministic demo mode because live AI is not connected.':'. The live AI agent will pick it up.') : '.'}`); el('taskTitle').focus();
+        }finally{creating=false;el('taskForm').querySelector('[type=submit]').disabled=false;}
       };
       el('taskTitle').oninput = () => el('taskTitle').setCustomValidity('');
       el('exportTasks').onclick = () => {
