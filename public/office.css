@@ -47,7 +47,7 @@ select,.team-picker select{background:var(--sheet);color:var(--ink);border:1px s
 #info dl{margin:0 0 14px;border-top:1px solid var(--line)}#info dt{font:500 12px var(--mono);color:var(--ink-2);margin-top:12px}#info dd{margin:3px 0 0;overflow-wrap:anywhere;line-height:1.45}
 #info .btn{width:100%;margin-top:8px}
 #info #iClose{position:absolute;right:8px;top:8px;width:44px;height:44px;border:0;background:transparent;font-size:22px}
-/* Log kantor: daftar kejadian simulasi; kotak kecil berwarna = kelompok meja orang yang disebut. */
+/* Office log: list of simulated events; small colored boxes = desk group of the person mentioned. */
 #log{position:fixed;right:24px;top:146px;width:290px;max-height:calc(100dvh - 270px);display:flex;flex-direction:column;overflow:hidden}
 body:has(#info:not([hidden])) #log{max-height:22vh}
 .log-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line)}

@@ -20,9 +20,10 @@
     Promise.all(['700 20px "IBM Plex Mono"', '600 60px "Plus Jakarta Sans"'].map(font => document.fonts.load(font))).catch(() => {}),
     new Promise(resolve => setTimeout(resolve, 2000))
   ]);
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  const lite = (() => { try { const saved = localStorage.getItem('organaLite3d'); if (saved !== null) return saved === '1'; } catch {} return (navigator.hardwareConcurrency || 8) <= 4 || matchMedia('(prefers-reduced-motion: reduce)').matches; })();
+  renderer.setPixelRatio(lite ? 1 : Math.min(devicePixelRatio, 2));
   renderer.setSize(innerWidth, innerHeight);
-  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.enabled = !lite;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.outputEncoding = THREE.sRGBEncoding;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;

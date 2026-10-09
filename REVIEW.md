@@ -1,237 +1,236 @@
-# Pemeriksaan kantor empat lantai
+# Four-floor office review
 
 ## Evening building overview (30 Sep 2026)
 
-Referensi full-building bernuansa senja disetujui pengguna. Design read: gedung kantor interaktif dengan interior hangat, panel navy dan seleksi biru; ENERGY 2 / RHYTHM 2 / MOTION 2. Kamera overview diperbesar dan ditengahkan di antara panel. Cahaya lingkungan dikurangi, sumber hangat per lantai serta lampu pagar memberi pembeda interior/kota. Kabut tipis menenangkan lingkungan jauh. Mode satu lantai mempertahankan interior siang.
+The dusk-toned full-building reference was approved by the user. Design read: an interactive office building with warm interiors, navy panels and blue selection; ENERGY 2 / RHYTHM 2 / MOTION 2. The overview camera is enlarged and centered between the panels. Ambient light is reduced, and warm per-floor sources plus fence lamps separate the interior from the city. Light fog calms the distant environment. Single-floor mode keeps the daytime interior.
 
-Thumbnail diambil dari model lantai sungguhan saat startup. Jumlah orang berasal dari roster pada lantai tersebut, mengecualikan yang sedang di tangga dan pengunjung barber. Panel gelap hanya dipakai saat overview untuk keterbacaan di atas pemandangan; tanpa menu atau statistik palsu. Ponsel menampilkan angka dan label ringkas menggantikan thumbnail.
+Thumbnails are captured from the real floor models at startup. People counts come from the roster on each floor, excluding anyone on the stairs and barber visitors. The dark panel is used only in the overview, for legibility over the scenery; there are no fake menus or statistics. On phones, compact numbers and labels replace the thumbnails.
 
-Gate perubahan:
-- R-23/R-37 PASS: referensi dan arah visual disetujui; preview berasal dari scene sendiri.
-- R-17/C-5 PASS: angka bukan status online, dihitung dari state simulasi; tes memeriksa 13 anggota di lantai kerja saat awal.
-- R-26/R-35 PASS: tes member-commands lulus untuk perintah, rapat, kamera tetap serta tugas; building-view memeriksa thumbnail, klik lantai dan pergantian tema tanpa error JS.
-- R-03/R-32 PASS: layout 375/768/1440 diuji tanpa overflow; navigasi menggunakan tombol native dan status aria-pressed, jumlah orang memiliki label aksesibel.
-- R-31 PASS: posisi panel, cahaya, thumbnail dan warna memiliki tujuan yang dicatat di atas. Tidak memakai blur mahal atau efek bloom untuk meniru gambar render.
+Change gates:
+- R-23/R-37 PASS: the reference and visual direction were approved; previews come from the app's own scene.
+- R-17/C-5 PASS: the numbers are not online status; they are computed from simulation state, and the test checks 13 members on the work floors at start.
+- R-26/R-35 PASS: the member-commands test passes for commands, meetings, fixed camera and tasks; building-view checks thumbnails, floor clicks and theme switching with no JS errors.
+- R-03/R-32 PASS: layouts at 375/768/1440 were tested without overflow; navigation uses native buttons with aria-pressed, and people counts have accessible labels.
+- R-31 PASS: panel position, light, thumbnails and color each have a recorded purpose above. No expensive blur or bloom is used to imitate a rendered image.
 
 
-## Warm studio dan avatar chibi (30 Sep 2026)
+## Warm studio and chibi avatars (30 Sep 2026)
 
-Arah dipilih dari referensi yang diberikan pengguna: interior gambar kedua dan avatar gambar terakhir, kemudian disetujui untuk diterapkan. Ruang tetap mengikuti fungsi empat lantai semula. Figur tetap ilustratif; pemetaan enam anggota perempuan, tujuh laki-laki, inisial dan identitas tugas dipertahankan.
+The direction was chosen from user-provided references: the interior from the second image and the avatar from the last image, then approved for implementation. Rooms still follow the original four-floor functions. Figures remain illustrative; the mapping of six female and seven male members, initials and task identity is preserved.
 
-Design read: kantor interaktif untuk 13 anggota, interior hangat dengan kayu terang dan karakter chibi; ENERGY 2 / RHYTHM 2 / MOTION 2. Material standar berpermukaan matte menggantikan toon pada benda padat; ACES mengendalikan permukaan terang. Garis tepi dikurangi agar bentuk dan cahaya menjadi pembeda utama. Kepala oval, rambut bervolume, wajah bermata sederhana, pipi dan tangan membulat memakai rig bersendi yang sudah ada. Kursi memakai bantalan, sandaran lembut dan kaki beroda; sofa memakai bantalan sage/krem. Tanaman daun, buku meja dan parket menambah detail yang dekat dengan referensi. Panel gading serta aksen hijau tua menyatukan kontrol dengan interior.
+Design read: an interactive office for 13 members, warm interior with light wood and chibi characters; ENERGY 2 / RHYTHM 2 / MOTION 2. Standard matte materials replace toon shading on solid objects; ACES controls bright surfaces. Outlines are reduced so that shape and light become the main differentiators. Oval heads, voluminous hair, simple-eyed faces, and rounded cheeks and hands use the existing jointed rig. Chairs have cushions, soft backs and wheeled legs; sofas use sage/cream cushions. Leafy plants, desk books and parquet add detail close to the reference. Ivory panels and dark green accents tie the controls to the interior.
 
-Gate perubahan:
-- R-23/R-37 PASS: arah dan pembuatan bentuk disetujui pengguna; semua geometri dibuat langsung di Three.js, tanpa gambar statis menggantikan ruang interaktif.
-- R-31/C-1 PASS: keputusan material, furnitur dan UI dijelaskan di atas dan mengikuti referensi.
-- R-17/C-5 PASS: figur bukan potret orang nyata, data anggota dan tugas tetap bersumber dari roster serta penyimpanan lama.
-- R-26/R-35 PASS: tes soft-avatar lulus untuk rendering, kamera mata/belakang, tangga, jeda dan 13 anggota tiba di meja makan; tidak ada error JavaScript.
-- R-32 PASS: komponen kontrol native serta fokus keyboard dipertahankan. Teks putih di aksen hijau tua tetap kontras tinggi.
-- R-03/R-35 PASS: tests/member-commands.cjs lulus setelah perubahan material terakhir: kontrol individu/divisi/custom, kapasitas rapat, kamera tetap, tugas aktif dan 375/768/1440px. Screenshot desktop dan mobile ditinjau. Artefak hitam lama masih terlihat di satu screenshot mobile headless; belum dinyatakan diperbaiki.
+Change gates:
+- R-23/R-37 PASS: direction and form were approved by the user; all geometry is built directly in Three.js, with no static image replacing the interactive room.
+- R-31/C-1 PASS: material, furniture and UI decisions are explained above and follow the reference.
+- R-17/C-5 PASS: figures are not portraits of real people, and member and task data still come from the roster and existing storage.
+- R-26/R-35 PASS: the soft-avatar test passes for rendering, eye/rear camera, stairs, pause and all 13 members arriving at the dining table; no JavaScript errors.
+- R-32 PASS: native controls and keyboard focus are preserved. White text on the dark green accent keeps high contrast.
+- R-03/R-35 PASS: tests/member-commands.cjs passes after the final material change: individual/division/custom controls, meeting capacity, fixed camera, active tasks and 375/768/1440px. Desktop and mobile screenshots were reviewed. An old black artifact is still visible in one headless mobile screenshot; it is not claimed as fixed.
 
 
 ## Soft-block avatars (30 Sep 2026)
 
-Mengikuti persetujuan pengguna untuk avatar soft block: geometri kepala, badan, rambut, tangan, kaki dan sepatu dibulatkan dengan radius proporsional, memakai cache geometri. Lebar badan dan jarak bahu diperkecil sedikit agar siluet tidak terlalu kaku. Figur tetap ilustratif, dengan inisial dan pembagian gender yang sama.
+Following the user's approval of soft-block avatars: head, body, hair, hand, leg and shoe geometry is rounded with proportional radii and uses a geometry cache. Body width and shoulder spacing are slightly reduced so the silhouette is less rigid. Figures remain illustrative, with the same initials and gender split.
 
-Pose bersendi sekarang diinterpolasi berdasarkan delta waktu; berjalan, duduk dan aktivitas tidak langsung mengganti sudut sendi. Ditambahkan gerak napas, pergeseran berat badan kecil, fase mengetik/mouse yang berbeda per anggota, dan kepala yang mengikuti arah belok. Mendekati titik tujuan akhir, kecepatan dikurangi. Karakter barber ikut memakai bentuk dan transisi pose baru.
+Jointed poses are now interpolated by time delta; walking, sitting and activities no longer switch joint angles instantly. Added breathing motion, small weight shifts, a different typing/mouse phase for each member, and heads that follow the turning direction. Speed is reduced near the final destination. The barber character uses the new shape and pose transitions too.
 
-Design read: maket kantor interaktif yang sama; ENERGY 2 / RHYTHM 2 / MOTION 2. Gerak kecil menandakan karakter hidup tanpa mengubah identitas maket atau memperbanyak elemen UI.
+Design read: the same interactive office model; ENERGY 2 / RHYTHM 2 / MOTION 2. Small motions signal living characters without changing the model's identity or adding UI elements.
 
-Validasi perubahan:
-- R-23/R-37 PASS: bentuk avatar dan arah visual diminta serta disetujui pengguna; geometri dibuat dalam kode, tanpa aset unduhan.
-- R-03/R-35 PASS: tests/member-commands.cjs lulus pada 375/768/1440px, termasuk cakupan perintah, kapasitas rapat, kamera, tugas aktif dan penyelesaian tugas.
-- R-26/R-32 PASS: kontrol yang ada dipertahankan; tests/soft-avatar.cjs memverifikasi kamera mata/belakang, keluar kamera, tangga, jeda serta seluruh 13 anggota tiba di meja makan.
-- R-19/R-31 PASS: pose dihaluskan untuk menjelaskan gerakan; tombol jeda tetap menghentikan simulasi. Warna, tipografi dan tata letak tetap mengikuti maket sebelumnya.
-- Pemeriksaan sintaks lulus; kedua tes selesai tanpa error JavaScript. Screenshot avatar dekat dan meja makan ditinjau.
+Change validation:
+- R-23/R-37 PASS: the avatar shape and visual direction were requested and approved by the user; geometry is built in code, with no downloaded assets.
+- R-03/R-35 PASS: tests/member-commands.cjs passes at 375/768/1440px, including commands, meeting capacity, camera, active tasks and task completion.
+- R-26/R-32 PASS: existing controls are preserved; tests/soft-avatar.cjs verifies the eye/rear camera, camera exit, stairs, pause and all 13 members arriving at the dining table.
+- R-19/R-31 PASS: poses are smoothed to explain movement; the pause button still stops the simulation. Color, typography and layout still follow the previous model.
+- The syntax check passes; both tests finish without JavaScript errors. Close-up avatar and dining table screenshots were reviewed.
 
-Catatan visual yang sudah tercatat sebelumnya masih muncul dalam satu screenshot headless: persegi hitam di samping navigasi setelah berganti lantai. Penyebab artefak tersebut belum terverifikasi dan tidak dinyatakan selesai oleh perubahan avatar ini.
+A previously recorded visual note still appears in one headless screenshot: a black square beside the navigation after switching floors. The cause of that artifact is unverified and this avatar change does not claim to resolve it.
 
 
-## Perintah anggota dan tugas aktif (30 Sep 2026)
+## Member commands and active tasks (30 Sep 2026)
 
-Panel anggota kini memuat tugas aktif (judul dan instruksi), pilihan penerima perintah (individu, divisi, atau daftar khusus), serta rapat/makan/rooftop/kembali kerja. Kamera tidak berpindah akibat perintah. Rapat manual berlangsung sampai diberi perintah berikutnya; kapasitas kursi diperiksa untuk seluruh undangan sebelum ada orang dipindahkan. Kursi makan/rooftop yang sudah menjadi tujuan orang lain tidak dialokasikan ulang.
+The member panel now shows the active task (title and instruction), a choice of command recipients (individual, division, or custom list), and meeting/lunch/rooftop/back-to-work actions. The camera does not move because of a command. A manual meeting lasts until the next command; seat capacity is checked for all invitees before anyone is moved. Dining/rooftop seats already targeted by someone else are not reallocated.
 
-Design read: panel pengelolaan kantor untuk tim yang sama, maket kertas; ENERGY 2 / RHYTHM 2 / MOTION 2. Tugas diletakkan sebelum aktivitas agar pekerjaan tetap terlihat saat karakter bergerak. Kontrol dikelompokkan dalam panel anggota agar footer global tetap ringkas. Inisial dengan tugas aktif diberi garis merah bata, dengan judul pekerjaan pada tooltip dan accessible label. Panel desktop dimulai di bawah pesan status; log disembunyikan saat detail terbuka. Tidak ada aset visual baru.
+Design read: an office management panel for the same team, paper model; ENERGY 2 / RHYTHM 2 / MOTION 2. The task is placed before the activities so work stays visible while characters move. Controls are grouped in the member panel so the global footer stays compact. Initials with an active task get a brick-red underline, with the work title in the tooltip and accessible label. The desktop panel starts below the status message; the log is hidden while details are open. No new visual assets.
 
 Delivery gate:
-- R-03/R-35 PASS: tests/member-commands.cjs memeriksa lebar 375/768/1440px, tanpa overflow horizontal panel; tangkapan layar ditinjau, panel memakai scroll vertikal.
-- R-26/C-2 PASS: perintah individu, divisi, kelompok khusus, rapat, makan, rooftop, dan kembali kerja memiliki handler; tes memeriksa hanya peserta terpilih yang menerima tujuan baru.
-- R-27 PASS: pilihan kosong dan ruangan penuh menghasilkan pesan; undangan gagal tidak memindahkan sebagian peserta. Tugas kosong menampilkan No active task.
-- R-32 PASS: select, checkbox berlabel, fieldset/legend, tombol native dan fokus yang diwarisi dari gaya sebelumnya; judul tugas memakai textContent, bukan HTML.
-- R-17/C-5 PASS: judul dan penanda tugas berasal dari tugas berstatus active yang tersimpan; menyelesaikan tugas menghapus penanda. Aktivitas tidak menyelesaikan tugas otomatis.
-- R-31/R-37 PASS: warna, tipografi, motif garis, serta tata letak mengikuti arah maket yang sudah dipilih; alasan penempatan tercatat di atas.
-- R-35 PASS: pengujian browser mencakup kedatangan peserta rapat, kamera tetap, tugas tetap terlihat saat tujuan berubah, selesai tugas, dan tanpa error JavaScript. Pemeriksaan sintaks lulus.
+- R-03/R-35 PASS: tests/member-commands.cjs checks 375/768/1440px widths with no horizontal panel overflow; screenshots were reviewed, and the panel scrolls vertically.
+- R-26/C-2 PASS: individual, division, custom group, meeting, lunch, rooftop and back-to-work commands all have handlers; the test checks that only the selected participants receive the new destination.
+- R-27 PASS: empty selections and full rooms produce messages; a failed invitation does not move some of the participants. An empty task shows No active task.
+- R-32 PASS: select, labeled checkbox, fieldset/legend, native buttons and focus inherited from earlier styles; task titles use textContent, not HTML.
+- R-17/C-5 PASS: the task title and marker come from the stored task with active status; completing the task removes the marker. Activities do not complete tasks automatically.
+- R-31/R-37 PASS: color, typography, line motif and layout follow the chosen model direction; the placement rationale is recorded above.
+- R-35 PASS: the browser test covers meeting participants arriving, a fixed camera, the task staying visible when the destination changes, task completion, and no JavaScript errors. The syntax check passes.
 
 
-## Avatar balok dan tangga terhubung (29 Sep 2026)
+## Block avatars and connected stairs (29 Sep 2026)
 
-Mengikuti brief terbaru: avatar bergaya balok dengan kepala kotak dan anggota tubuh bersendi. Enam avatar perempuan (Mira, Tari, Rani, Dewi, Laras, Sinta) memakai variasi rambut panjang/poni/kuncir; tujuh avatar laki-laki memakai rambut pendek. Bentuk ini ilustratif, bukan rekonstruksi penampilan orang nyata. Warna kelompok meja dan gaya maket kertas dipertahankan.
+Following the latest brief: block-style avatars with box heads and jointed limbs. Six female avatars (Mira, Tari, Rani, Dewi, Laras, Sinta) use long hair/bangs/ponytail variations; seven male avatars use short hair. The shapes are illustrative, not reconstructions of real people's appearance. Desk-group colors and the paper-model style are preserved.
 
-Label, pilihan anggota, log, detail, dan penanggung jawab tugas memakai inisial unik. Nama lengkap tetap menjadi identitas internal agar tugas dan pilihan musholla tersimpan tetap kompatibel. Laras = KL dan Sinta = KS agar tidak bertabrakan.
+Labels, member choices, log, details and task owners use unique initials. The full name remains the internal identity so tasks and saved prayer-room choices stay compatible. Laras = KL and Sinta = KS to avoid collisions.
 
-Tiga tangga balik arah menghubungkan keempat lantai di sisi kiri. Avatar menempuh jalur dunia yang sama dengan tangga, tetap terlihat selama perjalanan, dan dapat berganti tujuan tanpa berpindah mendadak. Tombol aktivitas mempertahankan lantai dan kamera; pilihan lantai tetap dikendalikan pengguna. Batas delta animasi dinaikkan dari 50 ke 150 ms untuk mengurangi perlambatan di renderer dengan frame rate rendah, dengan batas loncatan setelah tab kembali aktif.
+Three switchback stairs connect all four floors on the left side. Avatars follow the same world path as the stairs, stay visible during the trip, and can change destination without jumping. Activity buttons preserve the floor and camera; floor selection stays under user control. The animation delta cap was raised from 50 to 150 ms to reduce slowdown on low-frame-rate renderers, with a cap on the jump after a tab becomes active again.
 
-Musik instrumental sintetis 72 BPM dibuat melalui Web Audio tanpa berkas audio eksternal. Tombol Musik memulai/menghentikan audio; volume tersimpan, pemutaran tidak otomatis. Kontrol tambahan dapat diakses dengan keyboard dan mengikuti tata letak responsif.
+A 72 BPM synthesized instrumental is generated through Web Audio with no external audio files. The Music button starts/stops audio; volume is saved, and playback is not automatic. The extra controls are keyboard accessible and follow the responsive layout.
 
-Validasi awal: pemeriksaan sintaks JavaScript dan regresi visual/kontrol kamera `tests/office.cjs --visual` lulus. Pemeriksaan pendengaran di perangkat pengguna belum dilakukan; pengujian otomatis audio memeriksa AudioContext, penjadwalan nada, volume, dan penghentian.
-
-
-## Versi maket kertas (29 Sep 2026)
-
-Design read: visualisasi kantor interaktif untuk tim 13 orang, bahasa visual maket arsitek dari karton, dial ENERGY 2 / RHYTHM 2 / MOTION 2. Arah dipilih pengguna (maket kertas). Bentuk avatar berganti tiga kali atas pilihan pengguna: standee kertas, figur 3D proporsional, lalu avatar balok (versi yang dipakai).
-
-Keputusan dan alasannya:
-- Warna: krem kertas #ebe5d8, lembar #faf7f0, tinta #2a2622, satu aksen merah bata #b83a24 untuk tindakan utama, lantai aktif, dan karakter terpilih. Maket nyata dibuat dari karton; navy sebelumnya membuat kantor terasa seperti produk AI lain.
-- Empat warna baju tetap mengkodekan kelompok meja (data), juga dipakai pada karpet (tint 16%) dan kotak kecil di log.
-- Tipografi: Archivo untuk judul dan UI, karena grotesk tegas seperti huruf pada lembar gambar kerja. IBM Plex Mono kecil (11-12px) hanya untuk nomor lantai, nomor lembar, jam log, dan  seperti keterangan pada gambar teknik. Tidak ada heading monospace besar.
-- Motif identitas: title block lembar gambar (caption lantai), navigasi sebagai potongan gedung dengan pelat tebal antar lantai, dan garis tinta pada setiap tepi benda 3D.
-- Radius 2px pada kontrol, 4px pada panel; tanpa bayangan UI. Panel dipisahkan garis tinta 1px, seperti kertas yang ditumpuk.
-- Avatar: standee kertas diganti dengan figur 3D proporsional bersendi, lalu diganti lagi oleh avatar balok (lihat bagian "Avatar balok dan tangga terhubung" di atas). Pengguna memilih versi balok tersebut; keputusan figur seragam di sini tidak berlaku lagi.
-- Lantai 3: kedalaman dibuat tanpa dinding penuh (karpet, papan ide, rak rendah, kaca, lampu gantung, balok) agar brief ruang terbuka tetap berlaku.
-- Kota, awan, dan burung kembali atas permintaan pengguna, tetapi hanya pada tampilan seluruh gedung; tampilan satu lantai tetap bersih. Gedung dalam radius 65 dibatasi rendah agar kantor tetap terlihat dari kamera bawaan, dan awan diletakkan melingkar di luar tepi kota agar tidak menutupi layar saat kamera diputar.
-- Kota di sekitar gedung dan massa lantai bawah dihapus atas permintaan pengguna. Tampilan satu lantai hanya menampilkan lantai itu, seperti satu lembar maket; tangga luar dan bordes pintunya hanya tampil di tampilan seluruh gedung, karena tanpa lantai lain tangga tampak melayang.
-- Musholla: tidak ada yang dikirim otomatis. Keikutsertaan dipilih per orang oleh pengguna karena agama anggota tim nyata tidak boleh diasumsikan.
-- Log kantor diberi label "Kegiatan simulasi" agar tidak dibaca sebagai pesan AI.
-
-Kontras (skrip antislop): tinta pada lembar 14.03:1, tinta pada kertas 11.96:1, teks sekunder pada lembar 6.87:1 dan pada kertas 5.86:1, putih pada aksen 5.72:1, aksen pada kertas 4.56:1 (juga cincin fokus), placeholder 5.75:1, teks kecil pada lantai aktif 9.98:1.
-
-Validasi: `tests/office.cjs` lulus di Chromium headless. Tercakup: 13 anggota, 4 lantai, klik lantai dari tampilan gedung, seret orbit, Shift + seret geser, scroll zoom (termasuk di atas label nama), rutinitas dan ngobrol, batas empat orang, log terisi, Waktu salat tanpa pilihan menampilkan petunjuk, hanya anggota yang dicentang ke musholla, pilihan tersimpan setelah reload, tugas, makan/rooftop/kembali, 375/768/1440px tanpa overflow, tombol Log di ponsel, tanpa error JavaScript. Tangkapan layar ditinjau pada 375, 768, dan 1440px.
-
-Belum terverifikasi: pada satu urutan pengujian (dialog tugas dibuka, lalu tim turun makan), tangkapan layar Chromium headless menunjukkan satu area transparan di samping navigasi lantai. Raycast dan elementFromPoint di titik itu hanya menemukan kanvas dan gedung kota, dan pola ini belum dapat dijelaskan. Belum diperiksa di browser biasa.
-
-Gate antislop versi ini: R-02 tanpa em dash di teks UI; R-03 tiga lebar diuji; R-17 angka hanya dari data (13 orang, 4 lantai, jumlah tugas); R-23 bentuk avatar dikonfirmasi pengguna, tetap ilustratif; R-25 kontras di atas; R-26/R-35 setiap kontrol diuji otomatis; R-27 pesan memuat, gagal CDN/WebGL, log kosong, tugas kosong/gagal; R-32 fokus merah bata 3px, Escape menutup dialog, panah/WASD menggerakkan kamera; R-37 arah dipilih pengguna. PASS.
+Initial validation: the JavaScript syntax check and the visual/camera-control regression `tests/office.cjs --visual` pass. Listening on the user's device has not been done; the automated audio test checks AudioContext, note scheduling, volume and stopping.
 
 
-Versi terbaru mengikuti brief pengguna: 13 nama dan jabatan, empat lantai, satu ruang kerja terbuka tanpa partisi, dan kelompok meja yang ditentukan selama implementasi. Avatar, ukuran, furnitur, dan lokasi tangga merupakan interpretasi yang dilabeli di layar.
+## Paper model version (29 Sep 2026)
 
-## Keputusan visual terbaru
+Design read: an interactive office visualization for a 13-person team, in the visual language of an architect's cardboard model, dials ENERGY 2 / RHYTHM 2 / MOTION 2. The direction was chosen by the user (paper model). The avatar shape changed three times at the user's choice: paper standees, proportional 3D figures, then block avatars (the version in use).
 
-ENERGY 1 / RHYTHM 2 / MOTION 2 untuk adegan kantor. Panel tugas mempertahankan MOTION 1. Adegan 3D merupakan fokus utama; kontrol lantai disusun vertikal mengikuti tingkat gedung dan berpindah ke atas pada tablet/ponsel. Navy memisahkan kontrol dari lantai berwarna terang; biru menunjukkan lantai aktif. Warna baju yang berbeda menandai empat kelompok meja, bukan menebak pakaian atau ciri personal tim. Kayu, beton, dan tanaman membedakan fungsi ruang. Font sistem, permukaan solid, dan label tindakan mengikuti sistem tugas sebelumnya. Animasi menjelaskan perjalanan dan aktivitas, dengan tombol jeda.
+Decisions and reasons:
+- Color: paper cream #ebe5d8, sheet #faf7f0, ink #2a2622, and a single brick-red accent #b83a24 for primary actions, the active floor and the selected character. Real models are made of cardboard; the earlier navy made the office feel like another AI product.
+- Four shirt colors still encode the desk groups (data), also used on the carpet (16% tint) and the small boxes in the log.
+- Typography: Archivo for headings and UI, because a firm grotesque resembles lettering on drawing sheets. Small IBM Plex Mono (11-12px) is used only for floor numbers, sheet numbers and log times, like captions on technical drawings. No large monospace headings.
+- Identity motif: the drawing-sheet title block (floor caption), navigation as a building cross-section with thick slabs between floors, and an ink line on every edge of 3D objects.
+- 2px radius on controls and 4px on panels; no UI shadows. Panels are separated by a 1px ink line, like stacked paper.
+- Avatars: paper standees were replaced by jointed proportional 3D figures, then replaced again by block avatars (see "Block avatars and connected stairs" above). The user chose the block version; the uniform-figure decision here no longer applies.
+- Floor 3: depth is created without full walls (carpet, idea board, low shelf, glass, pendant lights, beams) so the open-space brief still holds.
+- The city, clouds and birds returned at the user's request, but only in the whole-building view; the single-floor view stays clean. Buildings within radius 65 are kept low so the office remains visible from the default camera, and clouds are placed in a ring outside the city edge so they do not cover the screen when the camera rotates.
+- The city around the building and the mass of the lower floors were removed at the user's request. The single-floor view shows only that floor, like one sheet of a model; the outer stairs and door landings appear only in the whole-building view, because without the other floors the stairs would look like they float.
+- Prayer room: nothing is sent automatically. Participation is chosen per person by the user, because the religion of real team members must not be assumed.
+- The office log is labeled "Simulated activity" so it is not read as an AI message.
 
-## Validasi versi terbaru
+Contrast (anti-slop script): ink on sheet 14.03:1, ink on paper 11.96:1, secondary text on sheet 6.87:1 and on paper 5.86:1, white on accent 5.72:1, accent on paper 4.56:1 (also the focus ring), placeholder 5.75:1, small text on the active floor 9.98:1.
 
-Pengujian Chromium lulus: 13 anggota tim, jabatan Frontend/Backend, 13 pilihan penanggung jawab, keempat lantai dan tampilan gedung, detail karakter, pembuatan/penyelesaian tugas, pause/resume, zoom/putar/reset, semua 13 karakter tiba di meja makan, rooftop, dan kembali ke meja masing-masing. Tugas lama milik Sari berhasil dipindahkan ke Kak Rani, dimulai, dan dipertahankan setelah reload. Tidak ada error JavaScript. Pemeriksaan sintaks JavaScript juga lulus.
+Validation: `tests/office.cjs` passes in headless Chromium. Covered: 13 members, 4 floors, floor click from the building view, orbit drag, Shift + drag pan, scroll zoom (including over name labels), routines and chatting, the four-person limit, a populated log, Prayer time with no selection showing a hint, only checked members going to the prayer room, selection saved after reload, tasks, lunch/rooftop/back, 375/768/1440px with no overflow, the Log button on phones, and no JavaScript errors. Screenshots were reviewed at 375, 768 and 1440px.
 
-Tangkapan layar ditinjau pada 375, 768, dan 1440px. Kamera menyesuaikan rasio layar agar lantai muat; label dipadatkan saat zoom jauh di ponsel. Dropdown selalu menyediakan seluruh tim. Tampilan gedung menyembunyikan label nama agar tidak bertumpuk dengan lantai atas. Pengujian mobile menggunakan viewport Chromium, bukan perangkat fisik.
+Not verified: in one test sequence (task dialog opened, then the team goes down to lunch), a headless Chromium screenshot shows a transparent area beside the floor navigation. Raycast and elementFromPoint at that point find only the canvas and the city buildings, and the pattern is not yet explained. It has not been checked in a regular browser.
 
-## Gate antislop versi terbaru
+Anti-slop gate for this version: R-02 no em dash in UI text; R-03 three widths tested; R-17 numbers only from data (13 people, 4 floors, task count); R-23 avatar shape confirmed by the user, still illustrative; R-25 contrast above; R-26/R-35 every control tested automatically; R-27 loading, CDN/WebGL failure, empty log, empty/failed task messages; R-32 3px brick-red focus, Escape closes dialogs, arrows/WASD move the camera; R-37 direction chosen by the user. PASS.
 
-- R-01 PASS: tidak ada gradien atau glow pada UI; pencahayaan 3D menunjukkan bentuk ruang.
-- R-02 PASS: copy baru tanpa em dash.
-- R-03 PASS: 375/768/1440px diuji; navigasi atas dan kamera adaptif pada layar kecil.
-- R-04 PASS: kontrol berlabel teks, tanpa ikon generik.
-- R-05 PASS: navigasi disusun menurut empat lantai yang diberikan pengguna.
-- R-06 PASS: font sistem mengikuti kontrol tugas; ukuran membedakan judul, nama, dan keterangan.
-- R-07 PASS: tanpa pola latar UI dekoratif.
-- R-08 PASS: tanpa panah dekoratif berulang.
-- R-09 PASS: angka lantai dan tugas berasal dari struktur dan data nyata aplikasi.
-- R-10 PASS: permukaan kontrol solid, tanpa blur.
-- R-11 PASS: radius kecil pada kontrol, lebih besar pada panel.
-- R-12 PASS: bayangan 3D menunjukkan kontak furnitur dengan lantai.
-- R-13 PASS: tidak ada glow.
-- R-14 PASS: tidak menambahkan kartu fitur.
-- R-15 PASS: kontrol spesifik: Turun makan, Ke rooftop, Kembali kerja.
-- R-16 PASS: copy tidak menjanjikan eksekusi AI.
-- R-17 PASS: 13 anggota sesuai data pengguna; jumlah tugas dihitung dari penyimpanan.
-- R-18 PASS: tidak ada testimoni.
-- R-19 PASS: animasi menampilkan perjalanan/aktivitas dan dapat dijeda.
-- R-20 PASS: nama tim, fungsi lantai, dan empat kelompok meja berasal dari brief.
-- R-21 PASS: tema navy mempertahankan konteks kantor 3D sebelumnya.
-- R-22 PASS: seluruh geometri merupakan kantor yang diminta, bukan ilustrasi dekoratif generik.
-- R-23 PASS: anggota tim dari pengguna; bentuk karakter dan denah ditandai sebagai interpretasi.
-- R-24 PASS: semua tombol lantai dan pilihan tim memiliki tujuan yang diuji.
-- R-25 PASS: teks sekunder pada kontrol lantai aktif diubah menjadi putih, 5.85:1; pasangan UI lain mengikuti panel yang telah dihitung.
-- R-26 PASS: kontrol lantai, kamera, tim, simulasi, dan tugas diuji.
-- R-27 PASS: pesan memuat, kegagalan CDN/WebGL, serta empty/error tugas tersedia.
-- R-28 PASS: tidak ada FAQ.
-- R-29 PASS: UI navy/netral/biru; empat warna baju mengkodekan kelompok meja.
-- R-30 PASS: visual mengikuti deskripsi kantor pengguna.
-- R-31 PASS: alasan keputusan dicatat di atas.
-- R-32 PASS: label nama adalah tombol; dropdown memberi akses seluruh anggota, kontrol kamera dan lantai dapat difokuskan, dialog mendukung Escape.
-- R-33 PASS: geometri, UI, dan logika ditulis langsung dalam sumber.
-- R-34 PASS: satu tema konsisten tanpa toggle yang tidak berfungsi.
-- R-35 PASS: server lokal, Chromium, alur interaktif, serta tangkapan layar digunakan.
-- R-36 PASS: tidak menambahkan klaim performa/keamanan.
-- R-37 PASS: arah eksplisit berasal dari screenshot dan deskripsi empat lantai pengguna.
-- R-38 PASS: interpretasi denah, karakter ilustratif, dan kegiatan simulasi dinyatakan di UI.
-- Liveliness PASS: adegan kantor fokus utama, navigasi mengikuti urutan lantai, satu aksen aktif, ruang kosong memisahkan model dari kontrol.
-- C-1 PASS: keputusan utama memiliki alasan tertulis.
-- C-2 PASS: semua kelompok kontrol diuji dengan browser.
-- C-3 PASS: tiap lantai berasal dari fungsi yang disebut pengguna.
-- C-4 PASS: tiga lebar layar, perpindahan lantai, tugas lama, dan reload diuji.
-- C-5 PASS: nama/jabatan dari pengguna; rupa avatar bukan klaim kemiripan asli.
 
-## Arsip: pemeriksaan sistem tugas versi awal
+The latest version follows the user's brief: 13 names and titles, four floors, one open workspace without partitions, and desk groups decided during implementation. Avatars, sizes, furniture and stair locations are interpretations labeled on screen.
 
-Lingkup: panel tugas baru dan penghubungnya dengan karakter. Ini bukan audit seluruh antarmuka 3D bawaan.
+## Latest visual decisions
 
-## Keputusan tampilan
+ENERGY 1 / RHYTHM 2 / MOTION 2 for the office scene. The task panel keeps MOTION 1. The 3D scene is the main focus; floor controls are stacked vertically following the building levels and move to the top on tablet/phone. Navy separates the controls from the bright floors; blue shows the active floor. Different shirt colors mark the four desk groups, rather than guessing at the team's clothing or personal traits. Wood, concrete and plants distinguish room functions. System fonts, solid surfaces and action labels follow the earlier task system. Animation explains travel and activity, with a pause button.
 
-Mengikuti referensi kantor 3D pengguna. ENERGY 1 / RHYTHM 2 / MOTION 1 untuk panel tugas.
+## Latest version validation
 
-- Warna gelap mengikuti ruang kerja yang sudah ada dan memisahkan formulir dari adegan 3D yang terang.
-- Biru menandai tindakan utama; status ditulis dengan teks.
-- Dua kolom menghubungkan formulir dengan daftar pekerjaan; satu kolom di ponsel menjaga ruang baca.
-- Font sistem mengikuti kontrol kantor yang ada, tanpa unduhan font tambahan.
-- Jarak 32px memisahkan formulir dari daftar; jarak lebih kecil mengelompokkan label dan input.
-- Garis pemisah mengurutkan tugas; tidak ada kartu dekoratif atau ikon tambahan.
-- Dialog native memberi fokus modal dan penutupan dengan Escape.
+Chromium tests pass: 13 team members, Frontend/Backend titles, 13 owner choices, all four floors and the building view, character details, task creation/completion, pause/resume, zoom/rotate/reset, all 13 characters arriving at the dining table, the rooftop, and returning to their own desks. An old task owned by Sari was moved to Kak Rani, started, and kept after reload. No JavaScript errors. The JavaScript syntax check also passes.
 
-## Bukti pengujian
+Screenshots were reviewed at 375, 768 and 1440px. The camera adapts to the screen ratio so the floor fits; labels are condensed when zoomed far out on phones. The dropdown always offers the whole team. The building view hides name labels so they do not overlap the upper floors. Mobile testing used a Chromium viewport, not a physical device.
 
-Pengujian Chromium otomatis: membuat tugas, teks HTML diperlakukan sebagai teks, penugasan, batas satu tugas aktif, penyelesaian dengan hasil, filter, ekspor JSON, persistensi setelah reload, navigasi ke karakter, tugas berlanjut sesudah salat, Tab/Shift+Tab/Escape, dan shortcut kamera saat mengetik. Skenario penyimpanan gagal dan JSON rusak tidak menimpa data. Tidak ada error JavaScript pada rangkaian pengujian.
+## Latest version anti-slop gate
 
-Tampilan diperiksa melalui tangkapan layar pada lebar 375, 768, dan 1440px. Dialog tidak memiliki overflow horizontal. Tombol panel minimum 44px; kontrol masuk panel juga minimum 44px.
+- R-01 PASS: no gradients or glow in the UI; 3D lighting shows the room's form.
+- R-02 PASS: new copy has no em dash.
+- R-03 PASS: 375/768/1440px tested; top navigation and camera adapt on small screens.
+- R-04 PASS: controls use text labels, no generic icons.
+- R-05 PASS: navigation is arranged by the four floors the user gave.
+- R-06 PASS: system fonts follow the task controls; size distinguishes headings, names and captions.
+- R-07 PASS: no decorative UI background pattern.
+- R-08 PASS: no repeated decorative arrows.
+- R-09 PASS: floor and task numbers come from the app's real structure and data.
+- R-10 PASS: control surfaces are solid, with no blur.
+- R-11 PASS: small radius on controls, larger on panels.
+- R-12 PASS: 3D shadows show furniture contact with the floor.
+- R-13 PASS: no glow.
+- R-14 PASS: no feature cards added.
+- R-15 PASS: specific controls: Go to lunch, To rooftop, Back to work.
+- R-16 PASS: copy does not promise AI execution.
+- R-17 PASS: 13 members match the user's data; task counts are computed from storage.
+- R-18 PASS: no testimonials.
+- R-19 PASS: animation shows travel/activity and can be paused.
+- R-20 PASS: team names, floor functions and four desk groups come from the brief.
+- R-21 PASS: the navy theme keeps the earlier 3D office context.
+- R-22 PASS: all geometry is the requested office, not generic decorative illustration.
+- R-23 PASS: team members come from the user; character shape and floor plan are marked as interpretation.
+- R-24 PASS: every floor button and team choice has a tested purpose.
+- R-25 PASS: secondary text on the active floor control changed to white, 5.85:1; other UI pairs follow the already-computed panel.
+- R-26 PASS: floor, camera, team, simulation and task controls tested.
+- R-27 PASS: loading messages, CDN/WebGL failure, and task empty/error states are provided.
+- R-28 PASS: no FAQ.
+- R-29 PASS: UI is navy/neutral/blue; four shirt colors encode desk groups.
+- R-30 PASS: visuals follow the user's office description.
+- R-31 PASS: decision rationale is recorded above.
+- R-32 PASS: name labels are buttons; the dropdown gives access to every member, camera and floor controls can be focused, and dialogs support Escape.
+- R-33 PASS: geometry, UI and logic are written directly in source.
+- R-34 PASS: one consistent theme, with no non-functional toggle.
+- R-35 PASS: local server, Chromium, interactive flows and screenshots were used.
+- R-36 PASS: no performance or security claims added.
+- R-37 PASS: explicit direction came from the user's screenshots and four-floor description.
+- R-38 PASS: floor-plan interpretation, illustrative characters and simulated activity are stated in the UI.
+- Liveliness PASS: the office scene is the main focus, navigation follows floor order, there is one active accent, and empty space separates the model from the controls.
+- C-1 PASS: key decisions have written reasons.
+- C-2 PASS: all control groups tested in a browser.
+- C-3 PASS: each floor comes from a function the user named.
+- C-4 PASS: three screen widths, floor changes, old tasks and reload tested.
+- C-5 PASS: names/titles come from the user; avatar appearance is not a claim of real likeness.
 
-Kontras dihitung dengan rumus WCAG dan script antislop: teks utama 14.45:1, teks sekunder 9.16:1, placeholder 7.42:1, tombol utama 5.85:1, tombol biasa 10.86:1, hover 8.01:1, pressed 5.78:1, fokus pada input 8.34:1. Batas input 3.53:1 terhadap isi input.
+## Archive: review of the original task system
 
-## Gate antislop
+Scope: the new task panel and its link to the characters. This is not an audit of the whole built-in 3D interface.
 
-- R-01 PASS: tidak menambahkan gradien atau glow.
-- R-02 PASS: copy panel tanpa em dash.
-- R-03 PASS: tiga lebar diuji tanpa overflow horizontal.
-- R-04 PASS: kontrol baru memakai label teks tanpa ikon generik.
-- R-05 PASS: formulir dan daftar mengikuti alur pemberian pekerjaan.
-- R-06 PASS: font sistem mengikuti kontrol aplikasi yang ada.
-- R-07 PASS: tidak menambahkan pola latar.
-- R-08 PASS: tidak menambahkan panah dekoratif.
-- R-09 PASS: status berupa teks yang berasal dari data tugas.
-- R-10 PASS: panel baru menggunakan permukaan solid tanpa blur.
-- R-11 PASS: radius dialog 12px dan input/tombol 6px.
-- R-12 PASS: tidak menambahkan bayangan dekoratif.
-- R-13 PASS: tidak menambahkan glow.
-- R-14 PASS: tugas berupa daftar, bukan kartu fitur seragam.
-- R-15 PASS: tombol menyebut tindakan konkret, seperti Tambahkan tugas.
-- R-16 PASS: copy menjelaskan fungsi tanpa klaim pemasaran AI.
-- R-17 PASS: jumlah tugas dihitung dari data pengguna.
-- R-18 PASS: tidak menambahkan testimoni.
-- R-19 PASS: panel tidak menambahkan animasi dekoratif.
-- R-20 PASS: tugas terhubung dengan karakter kantor yang sudah ada.
-- R-21 PASS: tema mengikuti referensi dan lingkungan 3D yang sudah ada.
-- R-22 PASS: tidak menambahkan ilustrasi.
-- R-23 PASS: tidak menambahkan identitas atau karakter fiktif baru.
-- R-24 PASS: Lihat karakter membuka karakter terkait.
-- R-25 PASS: pasangan warna teks panel dihitung, minimum 5.78:1.
-- R-26 PASS: tombol baru diuji melalui alur browser.
-- R-27 PASS: keadaan kosong dan gagal simpan terbaca; operasi localStorage sinkron tidak memerlukan loading jaringan.
-- R-28 PASS: tidak menambahkan FAQ.
-- R-29 PASS: panel memakai navy, netral, dan satu aksen biru.
-- R-30 PASS: mengikuti prototipe pengguna, bukan menyalin produk lain.
-- R-31 PASS: alasan keputusan tampilan dicatat di atas.
-- R-32 PASS: kontrol native, fokus terlihat, Tab/Shift+Tab/Escape diuji.
-- R-33 PASS: perubahan ditulis langsung melalui patch sumber.
-- R-34 PASS: tidak memperkenalkan toggle tema.
-- R-35 PASS: aplikasi dijalankan di server lokal dan alur tugas diuji di Chromium.
-- R-36 PASS: tidak menambahkan klaim keamanan atau performa.
-- R-37 PASS: arah berasal dari referensi pengguna dan dial dinyatakan sebelum implementasi.
-- R-38 PASS: status manual dan batas simulasi dijelaskan di panel.
-- Liveliness PASS: judul tugas menjadi fokus dialog; jarak memisahkan kelompok; aksen biru menandai tindakan; karakter menghubungkan panel dengan kantor.
-- C-1 PASS: alasan desain dicatat.
-- C-2 PASS: kontrol baru memiliki perilaku yang diuji.
-- C-3 PASS: setiap bagian mendukung pembuatan, pencarian, atau penyelesaian tugas.
-- C-4 PASS: empty/error states, keyboard, dan tiga lebar diuji.
-- C-5 PASS: penghitung memakai data pengguna; hasil tidak dibuat otomatis.
+## Display decisions
 
-## Batas versi ini
+Following the user's 3D office reference. ENERGY 1 / RHYTHM 2 / MOTION 1 for the task panel.
 
-Tidak ada eksekusi AI, sinkronisasi antarperangkat/tab, atau impor JSON. Pengujian mobile memakai viewport Chromium, bukan perangkat fisik. Three.js masih dimuat melalui CDN prototipe.
+- The dark color follows the existing workspace and separates the form from the bright 3D scene.
+- Blue marks the primary action; status is written as text.
+- Two columns connect the form with the work list; a single column on phones preserves reading space.
+- 32px spacing separates the form from the list; smaller spacing groups labels and inputs.
+- Divider lines order the tasks; there are no decorative cards or extra icons.
+- A native dialog provides modal focus and closing with Escape.
+
+## Test evidence
+
+Automated Chromium test: creating a task, HTML text treated as text, assignment, the one-active-task limit, completion with a result, filter, JSON export, persistence after reload, navigation to a character, tasks continuing after prayer, Tab/Shift+Tab/Escape, and camera shortcuts while typing. Failed-save and corrupt-JSON scenarios do not overwrite data. No JavaScript errors across the test run.
+
+The display was checked via screenshots at 375, 768 and 1440px widths. The dialog has no horizontal overflow. Panel buttons are at least 44px; controls inside the panel are also at least 44px.
+
+Contrast was computed with the WCAG formula and the anti-slop script: primary text 14.45:1, secondary text 9.16:1, placeholder 7.42:1, primary button 5.85:1, regular button 10.86:1, hover 8.01:1, pressed 5.78:1, input focus 8.34:1. Input border 3.53:1 against the input fill.
+
+## Anti-slop gate
+
+- R-01 PASS: no gradients or glow added.
+- R-02 PASS: panel copy has no em dash.
+- R-03 PASS: three widths tested without horizontal overflow.
+- R-04 PASS: new controls use text labels with no generic icons.
+- R-05 PASS: the form and list follow the flow of assigning work.
+- R-06 PASS: system fonts follow the app's existing controls.
+- R-07 PASS: no background pattern added.
+- R-08 PASS: no decorative arrows added.
+- R-09 PASS: status is text taken from task data.
+- R-10 PASS: the new panel uses solid surfaces with no blur.
+- R-11 PASS: 12px dialog radius and 6px input/button radius.
+- R-12 PASS: no decorative shadows added.
+- R-13 PASS: no glow added.
+- R-14 PASS: tasks are a list, not uniform feature cards.
+- R-15 PASS: buttons name concrete actions, such as Add task.
+- R-16 PASS: copy explains function without AI marketing claims.
+- R-17 PASS: task counts are computed from user data.
+- R-18 PASS: no testimonials added.
+- R-19 PASS: the panel adds no decorative animation.
+- R-20 PASS: tasks connect to the existing office characters.
+- R-21 PASS: the theme follows the reference and the existing 3D environment.
+- R-22 PASS: no illustrations added.
+- R-23 PASS: no new fictional identity or character added.
+- R-24 PASS: View character opens the related character.
+- R-25 PASS: panel text color pairs computed, minimum 5.78:1.
+- R-26 PASS: new buttons tested through browser flows.
+- R-27 PASS: empty and failed-save states are readable; synchronous localStorage operations need no network loading.
+- R-28 PASS: no FAQ added.
+- R-29 PASS: the panel uses navy, neutrals and a single blue accent.
+- R-30 PASS: follows the user's prototype, not a copy of another product.
+- R-31 PASS: display decision rationale recorded above.
+- R-32 PASS: native controls, visible focus, Tab/Shift+Tab/Escape tested.
+- R-33 PASS: changes were written directly via source patches.
+- R-34 PASS: no theme toggle introduced.
+- R-35 PASS: the app ran on a local server and the task flow was tested in Chromium.
+- R-36 PASS: no security or performance claims added.
+- R-37 PASS: direction came from the user's reference and the dials were stated before implementation.
+- R-38 PASS: manual status and simulation limits are explained in the panel.
+- Liveliness PASS: the task title is the dialog's focus; spacing separates groups; the blue accent marks actions; characters link the panel to the office.
+- C-1 PASS: design reasons recorded.
+- C-2 PASS: new controls have tested behavior.
+- C-3 PASS: each part supports creating, finding or completing tasks.
+- C-4 PASS: empty/error states, keyboard and three widths tested.
+- C-5 PASS: the counter uses user data; results are not generated automatically.
+
+## Limits of this version
+
+No AI execution, cross-device/tab sync, or JSON import. Mobile testing used a Chromium viewport, not a physical device. Three.js is still loaded through the prototype's CDN.

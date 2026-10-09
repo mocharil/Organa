@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="onboarding.css">
   <link rel="stylesheet" href="workflows.css">
   <link rel="stylesheet" href="workspace-ui.css">
+  <link rel="stylesheet" href="tour.css">
 </head>
 <body class="ui organa-loading">
   <canvas id="c" aria-label="Interactive model of a four-floor AI workplace"></canvas>
@@ -36,25 +37,29 @@
     </div>
     <nav id="organaMainNavigation" class="organa-nav" aria-label="Workspace pages">
       <span class="organa-nav-section">Workspace</span>
-      <button data-organa-route="overview"><svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5V21H3z"/><path d="M9 21v-6h6v6"/></svg><span>Overview</span></button>
-      <button data-organa-route="office" class="active"><svg viewBox="0 0 24 24"><path d="M4 21V4h11v17M15 9h5v12M2 21h20M8 8h3M8 12h3M8 16h3"/></svg><span>Office</span></button>
-      <button data-organa-route="missions"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M16 8l5-5M17 3h4v4"/></svg><span>Missions</span></button>
-      <button data-organa-route="tasks"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5h12M8 12h12M8 19h12M3 5h1M3 12h1M3 19h1"/></svg><span>Tasks</span></button>
-      <button data-organa-route="team"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-4 2.5-6 6-6s6 2 6 6"/><path d="M16 6a3 3 0 0 1 0 6M17 14c2.5.4 4 2.1 4 5"/></svg><span>Team</span></button>
-      <button data-organa-route="meetings"><svg viewBox="0 0 24 24"><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="7" r="2.5"/><circle cx="12" cy="17" r="2.5"/><path d="M9 8.5l2 5M15 8.5l-2 5"/></svg><span>Meetings</span></button>
-      <button data-organa-route="knowledge"><svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H12v17H6.5A2.5 2.5 0 0 0 4 22z"/><path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H12v17h5.5A2.5 2.5 0 0 1 20 22z"/></svg><span>Knowledge</span></button>
-      <button data-organa-route="approvals"><svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-5"/><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/></svg><span>Approvals</span></button>
-      <button data-organa-route="standup"><svg viewBox="0 0 24 24"><path d="M4 19h16M6 16V9M12 16V5M18 16v-4"/><path d="M5 5l2-2 2 2M16 8l2-2 2 2"/></svg><span>Stand-up</span></button>
+      <button data-organa-route="overview" title="Company summary, North Star and recent results"><svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5V21H3z"/><path d="M9 21v-6h6v6"/></svg><span>Overview</span></button>
+      <button data-organa-route="office" class="active" title="3D office where AI coworkers work live"><svg viewBox="0 0 24 24"><path d="M4 21V4h11v17M15 9h5v12M2 21h20M8 8h3M8 12h3M8 16h3"/></svg><span>Office</span></button>
+      <button data-organa-route="missions" title="Give the team an outcome; the Chief of Staff plans the work"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M16 8l5-5M17 3h4v4"/></svg><span>Missions</span></button>
+      <button data-organa-route="tasks" title="Assign or review single pieces of work"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5h12M8 12h12M8 19h12M3 5h1M3 12h1M3 19h1"/></svg><span>Tasks</span></button>
+      <button data-organa-route="team" title="Your AI coworkers: roles, hiring and structure"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-4 2.5-6 6-6s6 2 6 6"/><path d="M16 6a3 3 0 0 1 0 6M17 14c2.5.4 4 2.1 4 5"/></svg><span>Team</span></button>
+      <button data-organa-route="meetings" title="Multi-agent meetings that end in a decision for you"><svg viewBox="0 0 24 24"><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="7" r="2.5"/><circle cx="12" cy="17" r="2.5"/><path d="M9 8.5l2 5M15 8.5l-2 5"/></svg><span>Meetings</span></button>
+      <button data-organa-route="knowledge" title="Saved deliverables and why the team made them"><svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H12v17H6.5A2.5 2.5 0 0 0 4 22z"/><path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H12v17h5.5A2.5 2.5 0 0 1 20 22z"/></svg><span>Knowledge</span></button>
+      <button data-organa-route="approvals" title="Decisions waiting for you"><svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-5"/><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/></svg><span>Approvals</span></button>
+      <button data-organa-route="emails" title="Draft emails with AI, review them, and send from your own Gmail"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg><span>Emails</span></button>
+      <button data-organa-route="standup" title="Daily summary of what the team did"><svg viewBox="0 0 24 24"><path d="M4 19h16M6 16V9M12 16V5M18 16v-4"/><path d="M5 5l2-2 2 2M16 8l2-2 2 2"/></svg><span>Stand-up</span></button>
       <span class="organa-nav-section">Strategy</span>
-      <button data-organa-route="goals"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16"/><path d="M7 15l4-4 3 2 5-6"/></svg><span>Goals</span></button>
-      <button data-organa-route="performance"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Performance</span></button>
-      <button data-organa-route="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 13.5a7.5 7.5 0 0 0 0-3l2-1.5-2-3.5-2.5 1A8 8 0 0 0 14 5l-.4-2.7h-4L9 5a8 8 0 0 0-2.5 1.5l-2.5-1L2 9l2 1.5a7.5 7.5 0 0 0 0 3L2 15l2 3.5 2.5-1A8 8 0 0 0 9 19l.6 2.7h4L14 19a8 8 0 0 0 2.5-1.5l2.5 1 2-3.5z"/></svg><span>Settings</span></button>
+      <button data-organa-route="goals" title="Company goals and KPIs"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16"/><path d="M7 15l4-4 3 2 5-6"/></svg><span>Goals</span></button>
+      <button data-organa-route="performance" title="Usage, cost and team output"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Performance</span></button>
+      <button data-organa-route="settings" title="AI model, company setup and demo data"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 13.5a7.5 7.5 0 0 0 0-3l2-1.5-2-3.5-2.5 1A8 8 0 0 0 14 5l-.4-2.7h-4L9 5a8 8 0 0 0-2.5 1.5l-2.5-1L2 9l2 1.5a7.5 7.5 0 0 0 0 3L2 15l2 3.5 2.5-1A8 8 0 0 0 9 19l.6 2.7h4L14 19a8 8 0 0 0 2.5-1.5l2.5 1 2-3.5z"/></svg><span>Settings</span></button>
     </nav>
     <div class="organa-sidebar-foot">
       <span class="organa-live-dot"></span>
       <div class="organa-sidebar-status-copy">
         <span>Organization online<br>Human authority retained</span>
         <button id="organaResumeOnboarding" class="organa-resume-setup" type="button" hidden>Continue setup →</button>
+        <button id="organaTakeTour" class="organa-ai-status" type="button" title="Replay the guided tour">Take the tour</button>
+        <button id="organaSimpleMenu" class="organa-ai-status" type="button" aria-pressed="false" title="Hide advanced pages (Goals, Performance, Knowledge, Meetings)">Menu: full</button>
+        <button id="organaLite3d" class="organa-ai-status" type="button" aria-pressed="false" title="Lighter 3D office for slower computers (reloads the page)">3D: full</button>
         <button id="organaAiStatus" class="organa-ai-status" type="button" aria-label="Open AI settings">AI · checking…</button>
       </div>
     </div>
@@ -122,6 +127,7 @@
       <form id="taskForm"><h2>Create a task</h2><label for="taskTitle">Task</label><input id="taskTitle" required maxlength="160" placeholder="Example: Draft the content calendar">
         <label for="taskAssignee">Assignee</label><select id="taskAssignee" required></select>
         <label for="taskBrief">Instructions <span>(optional)</span></label><textarea id="taskBrief" rows="4" maxlength="5000" placeholder="Describe what is needed and the expected result"></textarea>
+        <label class="organa-research-toggle"><input type="checkbox" id="taskWebResearch"> <span>Use web research: searches the live web and cites sources (adds about 10-20 seconds)</span></label>
         <button class="task-primary" type="submit">Add task</button><p class="task-note" id="saveNote">Connecting to persistence…</p><button type="button" id="exportTasks">Export tasks</button>
       </form>
       <section aria-labelledby="taskListHeading"><h2 id="taskListHeading">Task list</h2>
@@ -144,11 +150,14 @@
     <p id="mcStatus" class="mc-status" role="status" aria-live="polite"></p>
   </dialog>
   <script src="workspace-components.js"></script>
+  <script src="workspaces.js"></script>
   <script src="tasks.js"></script>
   <script src="onboarding.js"></script>
+  <script src="emails.js"></script>
   <script src="mission-control.js"></script>
   <script src="organa-ui.js"></script>
   <script src="music.js"></script>
+  <script src="tour.js"></script>
   <script src="vendor/three-r128.min.js"></script>
   <script src="office.js"></script>
 </body>

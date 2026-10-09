@@ -6,6 +6,9 @@ const path=require('node:path');
 const config=require('./config');
 const {createDefaultState,nusaDemoState}=require('./data/default-state');
 const {JsonStateStore}=require('./repositories/json-state-store');
+const {WorkspaceService}=require('./services/workspace-service');
+const {GoogleService}=require('./services/google-service');
+const {EmailService}=require('./services/email-service');
 const {FirestoreStateStore}=require('./repositories/firestore-state-store');
 const {createProvider}=require('./ai/provider-factory');
 const {StateManager}=require('./services/state-manager');
@@ -30,7 +33,7 @@ const text=(value,max)=>typeof value==='string'?value.trim().slice(0,max):'';
 function readJson(req){return new Promise((resolve,reject)=>{let size=0;const chunks=[];req.on('data',chunk=>{size+=chunk.length;if(size>2e6){reject(Object.assign(new Error('Request too large'),{status:413}));req.destroy();}else chunks.push(chunk);});req.on('end',()=>{try{resolve(JSON.parse(Buffer.concat(chunks).toString()||'{}'));}catch{reject(Object.assign(new Error('Invalid JSON'),{status:400}));}});});}
 function serveFile(res,url){let file;try{const route=url.pathname==='/'?'/index.html':url.pathname==='/app'||url.pathname==='/workspace'?'/app.html':url.pathname;file=path.join(config.publicDir,decodeURIComponent(route));}catch{return send(res,400,{error:'Bad path.'});}if(!file.startsWith(config.publicDir+path.sep))return send(res,403,{error:'Forbidden.'});fs.readFile(file,(error,data)=>{if(error){res.writeHead(404,{'content-type':'text/plain'});return res.end('Not found');}res.writeHead(200,{'content-type':TYPES[path.extname(file)]||'application/octet-stream','cache-control':'no-cache'});res.end(data);});}
 
-function normalizeState(state){for(const key of ['companies','northStars','goals','agents','projects','tasks','meetings','deliverables','approvals','events','standups','usage','bootstrapProposals'])if(!Array.isArray(state[key]))state[key]=[];state.settings ||= {};state.schemaVersion=2;if(!state.activeCompanyId&&state.companies[0])state.activeCompanyId=state.companies[0].id;return state;}
+function normalizeState(state){for(const key of ['companies','northStars','goals','agents','projects','tasks','meetings','deliverables','approvals','events','standups','usage','bootstrapProposals','emails'])if(!Array.isArray(state[key]))state[key]=[];state.settings ||= {};state.schemaVersion=2;if(!state.activeCompanyId&&state.companies[0])state.activeCompanyId=state.companies[0].id;return state;}
 
 async function buildRuntime(){
  const jsonStore=new JsonStateStore({dataDir:config.dataDir,fileName:config.stateFileName,createDefaultState});let store=jsonStore,storageMode='json';
@@ -42,11 +45,14 @@ async function buildRuntime(){
  const provider=createProvider(config,stateManager);const eventService=new EventService(stateManager);const usageService=new UsageService(stateManager);const companyService=new CompanyService({stateManager});const northStarService=new NorthStarService({stateManager,eventService});const deliverableService=new DeliverableService({stateManager,eventService});const approvalService=new ApprovalService({stateManager,eventService});const orchestrationService=new OrchestrationService({stateManager,provider,eventService,usageService,config});const agentService=new AgentService({stateManager,provider,eventService,usageService,config});const bootstrapService=new BootstrapService({stateManager,provider,eventService,usageService,config});const taskService=new TaskService({stateManager,eventService,deliverableService,approvalService,orchestrationService});const taskWorker=new TaskWorker({stateManager,provider,eventService,usageService,deliverableService,approvalService,orchestrationService,config});taskService.setKick(taskWorker.kick);const meetingService=new MeetingService({stateManager,provider,eventService,usageService,deliverableService,approvalService,config});const standupService=new StandupService({stateManager,provider,eventService,usageService,config});
  // Recover interrupted task runs after a process restart.
  let reset=false;for(const task of stateManager.get().tasks){if(task.status==='active'){task.status='queued';task.runId=null;task.version=(task.version||0)+1;task.updatedAt=now();reset=true;}}for(const meeting of stateManager.get().meetings||[]){if(['in_progress','synthesizing'].includes(meeting.status)){meeting.status='failed';meeting.error='The server restarted during this meeting. Retry to finish the decision record.';meeting.updatedAt=now();eventService.append('meeting.failed',{companyId:meeting.companyId,entity:{type:'meeting',id:meeting.id},room:'meeting_room',payload:{participants:meeting.participantAgentIds,error:meeting.error}});reset=true;}}if(reset)await stateManager.persist();
- return{stateManager,provider,storageMode,eventService,usageService,companyService,northStarService,deliverableService,approvalService,orchestrationService,agentService,bootstrapService,taskService,taskWorker,meetingService,standupService};
+ const workspaceService=new WorkspaceService({stateManager,provider,runtime:{taskWorker}});
+ const googleService=new GoogleService({config,eventService,workspaceService});
+ const emailService=new EmailService({stateManager,provider,eventService,usageService,deliverableService,googleService,config});await emailService.recoverInterrupted();
+ return{emailService,googleService,workspaceService,stateManager,provider,storageMode,eventService,usageService,companyService,northStarService,deliverableService,approvalService,orchestrationService,agentService,bootstrapService,taskService,taskWorker,meetingService,standupService};
 }
 
 async function api(runtime,req,res,url){
- const {stateManager,provider,storageMode,eventService,usageService,companyService,northStarService,deliverableService,approvalService,orchestrationService,agentService,bootstrapService,taskService,taskWorker,meetingService,standupService}=runtime;
+ const {emailService,googleService,workspaceService,stateManager,provider,storageMode,eventService,usageService,companyService,northStarService,deliverableService,approvalService,orchestrationService,agentService,bootstrapService,taskService,taskWorker,meetingService,standupService}=runtime;
  const body=async()=>readJson(req);
  if(url.pathname==='/api/health'&&req.method==='GET'){const llm=provider.settings();return send(res,200,{status:'ok',version:`${require('../package.json').version}-organa`,provider:provider.name,model:provider.model,plannerModel:provider.plannerModel,storage:storageMode,companyId:stateManager.companyId(),cloudReady:Boolean(config.googleCloudProject),ai:llm.runtime,timestamp:now()});}
  if(url.pathname==='/api/llm/settings'&&req.method==='GET')return send(res,200,provider.settings());
@@ -106,7 +112,25 @@ async function api(runtime,req,res,url){
  m=url.pathname.match(/^\/api\/standups\/([^/]+)$/);if(m&&req.method==='GET'){const st=standupService.get(m[1]);return st?send(res,200,st):send(res,404,{error:'Stand-up not found.'});}
  if(url.pathname==='/api/usage/summary'&&req.method==='GET')return send(res,200,usageService.summary());
 
- if(url.pathname==='/api/demo/reset'&&req.method==='POST'){if(!config.enableDemoReset)return send(res,403,{error:'Demo reset is disabled.'});const llmSettings=stateManager.get().settings?.llm;const next=nusaDemoState();if(llmSettings)next.settings={...(next.settings||{}),llm:{...llmSettings}};await stateManager.replace(next);provider.refresh();runtime.taskWorker.busy.clear();return send(res,200,{ok:true,company:companyService.get(),agents:agentService.list()});}
+ if(url.pathname==='/api/emails'&&req.method==='GET')return send(res,200,emailService.list({status:url.searchParams.get('status')||undefined}));
+ if(url.pathname==='/api/emails/draft'&&req.method==='POST')return send(res,201,await emailService.draft(await body()));
+ m=url.pathname.match(/^\/api\/emails\/([^/]+)$/);if(m&&req.method==='GET')return send(res,200,emailService.require(m[1]));
+ if(m&&req.method==='PATCH')return send(res,200,await emailService.update(m[1],await body()));
+ m=url.pathname.match(/^\/api\/emails\/([^/]+)\/(send|discard)$/);if(m&&req.method==='POST')return send(res,200,m[2]==='send'?await emailService.send(m[1],await body()):await emailService.discard(m[1]));
+ if(url.pathname==='/api/google/status'&&req.method==='GET')return send(res,200,googleService.status());
+ if(url.pathname==='/api/google/connect'&&req.method==='POST')return send(res,200,googleService.begin(await body()));
+ if(url.pathname==='/api/google/callback'&&req.method==='GET'){let page;try{const status=await googleService.complete({code:url.searchParams.get('code'),state:url.searchParams.get('state'),error:url.searchParams.get('error')});page=googleService.callbackPage(true,status.email?`Connected as ${status.email}. You can now save results to Google Docs and Sheets.`:'You can now save results to Google Docs and Sheets.');}catch(error){page=googleService.callbackPage(false,error.status?error.message:'Something went wrong while connecting. Please try again.');}res.writeHead(200,{'content-type':'text/html; charset=utf-8','cache-control':'no-store'});return res.end(page);}
+ if(url.pathname==='/api/google/disconnect'&&req.method==='POST')return send(res,200,await googleService.disconnect());
+ m=url.pathname.match(/^\/api\/deliverables\/([^/]+)\/save-to-google$/);if(m&&req.method==='POST'){const input=await body();return send(res,200,await googleService.saveToGoogle(m[1],input.target));}
+ if(url.pathname==='/api/workspaces'&&req.method==='GET')return send(res,200,workspaceService.list());
+ if(url.pathname==='/api/workspaces/demo'&&req.method==='POST')return send(res,200,{...await workspaceService.loadDemo(),workspaces:workspaceService.list()});
+ if(url.pathname==='/api/workspaces/demo'&&req.method==='DELETE')return send(res,200,{workspaces:await workspaceService.removeDemo()});
+ m=url.pathname.match(/^\/api\/workspaces\/([^/]+)\/activate$/);if(m&&req.method==='POST')return send(res,200,{workspaces:await workspaceService.activate(decodeURIComponent(m[1]))});
+ if(url.pathname==='/api/backups'&&req.method==='GET')return send(res,200,workspaceService.backups());
+ if(url.pathname==='/api/backups'&&req.method==='POST')return send(res,201,await workspaceService.backupNow());
+ m=url.pathname.match(/^\/api\/backups\/([^/]+)\/restore$/);if(m&&req.method==='POST')return send(res,200,await workspaceService.restore(decodeURIComponent(m[1])));
+ m=url.pathname.match(/^\/api\/deliverables\/([^/]+)\/export$/);if(m&&req.method==='GET'){const out=workspaceService.exportDeliverable(m[1],url.searchParams.get('format')||'md');res.writeHead(200,{'content-type':out.contentType,'content-disposition':`attachment; filename="${out.filename}"`,'cache-control':'no-store'});return res.end(out.body);}
+ if(url.pathname==='/api/demo/reset'&&req.method==='POST'){if(!config.enableDemoReset)return send(res,403,{error:'Demo reset is disabled.'});const llmSettings=stateManager.get().settings?.llm;workspaceService.backupSoon('predemo');const next=nusaDemoState();if(llmSettings)next.settings={...(next.settings||{}),llm:{...llmSettings}};await stateManager.replace(next);provider.refresh();runtime.taskWorker.busy.clear();return send(res,200,{ok:true,company:companyService.get(),agents:agentService.list()});}
  return send(res,404,{error:'Not found.'});
 }
 

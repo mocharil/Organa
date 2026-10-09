@@ -5,17 +5,22 @@
   "description": "Organa: AI organization OS with dual work intake, Chief of Staff auto-routing, direct AI employee assignment, governed execution, and configurable multi-LLM providers.",
   "scripts": {
     "start": "node server/server.js",
-    "test": "node tests/provider-config.cjs && node tests/hackathon-core.cjs && node tests/digital-twin.cjs && node tests/navigation-consistency.cjs && node tests/team-hierarchy.cjs && node tests/standup-reliability.cjs && node tests/ai-setup-guardrails.cjs && node tests/dual-work-intake.cjs && node tests/onboarding-ui.cjs && node tests/onboarding-api.cjs && node tests/workflows-api.cjs && node tests/recovery-regressions.cjs && node tests/live-check-runner.cjs",
-    "check": "node --check server/server.js && node --check server/config.js && node --check server/ai/provider-manager.js && node --check server/ai/gemini-provider.js && node --check server/ai/openai-provider.js && node --check server/ai/anthropic-provider.js && node --check public/tasks.js && node --check public/mission-control.js && node --check public/office.js && node --check public/organa-ui.js && node --check public/landing.js && node --check public/onboarding.js && node --check server/services/bootstrap-service.js && node --check server/services/agent-service.js && node --check server/services/agent-validation.js && node --check server/services/meeting-service.js && node --check server/services/standup-service.js && node --check server/prompts/index.js && node --check server/services/event-service.js && node --check public/workspace-components.js && node --check server/services/request-identity.js && node --check scripts/live-check.cjs && node --check scripts/live-provider-guard.cjs && node --check scripts/lib/live-check-support.cjs",
+    "test": "node tests/provider-config.cjs && node tests/hackathon-core.cjs && node tests/digital-twin.cjs && node tests/navigation-consistency.cjs && node tests/team-hierarchy.cjs && node tests/standup-reliability.cjs && node tests/ai-setup-guardrails.cjs && node tests/dual-work-intake.cjs && node tests/onboarding-ui.cjs && node tests/onboarding-api.cjs && node tests/workflows-api.cjs && node tests/recovery-regressions.cjs && node tests/workspace-api.cjs && node tests/web-research.cjs && node tests/export-formats.cjs && node tests/google-api.cjs && node tests/email-api.cjs && node tests/live-check-runner.cjs",
+    "check": "node --check server/server.js && node --check server/config.js && node --check server/ai/provider-manager.js && node --check server/ai/gemini-provider.js && node --check server/ai/openai-provider.js && node --check server/ai/anthropic-provider.js && node --check public/tasks.js && node --check public/mission-control.js && node --check public/office.js && node --check public/organa-ui.js && node --check public/landing.js && node --check public/onboarding.js && node --check server/services/bootstrap-service.js && node --check server/services/agent-service.js && node --check server/services/agent-validation.js && node --check server/services/meeting-service.js && node --check server/services/standup-service.js && node --check server/prompts/index.js && node --check server/services/event-service.js && node --check public/workspace-components.js && node --check public/tour.js && node --check server/services/request-identity.js && node --check scripts/live-check.cjs && node --check scripts/live-provider-guard.cjs && node --check scripts/lib/live-check-support.cjs && node --check public/workspaces.js && node --check server/services/workspace-service.js && node --check server/repositories/json-state-store.js && node --check scripts/quality-eval.cjs && node --check server/services/export-formats.js && node --check server/services/google-service.js && node --check public/emails.js && node --check server/services/email-service.js",
     "test:onboarding": "node tests/onboarding-api.cjs",
     "test:e2e": "node tests/onboarding-e2e.cjs",
     "test:workflows": "node tests/workflows-api.cjs",
     "test:e2e:workflows": "node tests/workflows-e2e.cjs",
-    "test:e2e:all": "node tests/onboarding-e2e.cjs && node tests/workflows-e2e.cjs && node tests/workspace-ui-e2e.cjs && node tests/office-ui-e2e.cjs",
+    "test:e2e:all": "node tests/onboarding-e2e.cjs && node tests/workflows-e2e.cjs && node tests/workspace-ui-e2e.cjs && node tests/office-ui-e2e.cjs && node tests/tour-e2e.cjs",
+    "test:e2e:tour": "node tests/tour-e2e.cjs",
     "test:e2e:ui": "node tests/workspace-ui-e2e.cjs",
-    "test:e2e:office": "node tests/office-ui-e2e.cjs",
+    "test:e2e:office": "node tests/office-ui-e2e.cjs && node tests/tour-e2e.cjs",
     "test:live": "node scripts/live-check.cjs",
-    "test:live:runner": "node tests/live-check-runner.cjs"
+    "test:live:runner": "node tests/live-check-runner.cjs",
+    "test:quality": "node scripts/quality-eval.cjs",
+    "test:workspaces": "node tests/workspace-api.cjs",
+    "test:google": "node tests/google-api.cjs",
+    "test:email": "node tests/email-api.cjs"
   },
   "engines": {
     "node": ">=22"

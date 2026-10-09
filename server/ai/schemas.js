@@ -9,7 +9,7 @@ const specialistResponseSchema = {
     output: {
       type: 'object',
       properties: {
-        title: scalar('string'), content: scalar('string'), structuredData: {type: ['object', 'array', 'string', 'number', 'boolean', 'null']},
+        title: scalar('string'), content: scalar('string'), structuredData: {type: ['object', 'string', 'null']},
       },
       required: ['title', 'content'],
     },
@@ -25,7 +25,7 @@ const companyProposalSchema = {
   properties: {
     companyProfile: {type: 'object', properties: {name: scalar('string'), description: scalar('string'), industry: scalar('string'), stage: scalar('string'), audience: scalar('string')}, required: ['name', 'description', 'industry', 'stage', 'audience']},
     northStarDraft: {type: 'object', properties: {mission: scalar('string'), vision: scalar('string'), principles: stringArray, hardConstraints: stringArray, softPreferences: stringArray}, required: ['mission', 'vision', 'principles', 'hardConstraints', 'softPreferences']},
-    initialGoals: {type: 'array', items: {type: 'object', properties: {title: scalar('string'), description: scalar('string'), deadline: {type: ['string', 'null']}, successCriteria: stringArray, suggestedKpis: {type: 'array', items: {type: 'object'}}}, required: ['title', 'description', 'successCriteria', 'suggestedKpis']}},
+    initialGoals: {type: 'array', items: {type: 'object', properties: {title: scalar('string'), description: scalar('string'), deadline: {type: ['string', 'null']}, successCriteria: stringArray, suggestedKpis: {type: 'array', items: {type: 'object', properties: {name: scalar('string'), target: {type: ['number', 'string', 'null']}, unit: scalar('string'), deadline: {type: ['string', 'null']}}, required: ['name']}}}, required: ['title', 'description', 'successCriteria', 'suggestedKpis']}},
     recommendedTeam: {type: 'array', items: {type: 'object', properties: {tempId: scalar('string'), displayNameSuggestion: scalar('string'), role: scalar('string'), division: scalar('string'), reportsToTempId: {type: ['string', 'null']}, purpose: scalar('string'), responsibilities: stringArray, skills: stringArray, requestedToolIds: stringArray, boundaries: stringArray, recommendedAutonomy: scalar('string'), whyNeeded: scalar('string')}, required: ['tempId', 'displayNameSuggestion', 'role', 'division', 'purpose', 'responsibilities', 'skills', 'requestedToolIds', 'boundaries', 'recommendedAutonomy', 'whyNeeded']}},
     initialTasks: {type: 'array', items: {type: 'object'}}, approvalPolicyDraft: {type: 'object'}, assumptions: stringArray, questions: stringArray,
   },
@@ -52,7 +52,9 @@ const planSchema = {
       requiredToolIds: stringArray, dependsOn: stringArray, collaborationSuggestedWith: stringArray, outputContract: {type: 'object'},
       riskLevel: {type: 'string', enum: ['low', 'medium', 'high']}, approvalPolicy: {type: 'string'}, reason: scalar('string'),
     }, required: ['tempId', 'title', 'description', 'requiredSkills', 'preferredAgentIds', 'requiredToolIds', 'dependsOn', 'collaborationSuggestedWith', 'outputContract', 'riskLevel', 'approvalPolicy', 'reason']}},
-    meetings: {type: 'array', items: {type: 'object'}},
+    meetings: {type: 'array', items: {type: 'object', properties: {
+      title: scalar('string'), agenda: scalar('string'), participantAgentIds: stringArray, dependsOn: stringArray, maxRounds: scalar('integer'), outputContract: {type: 'object'},
+    }, required: ['title', 'agenda', 'participantAgentIds', 'dependsOn']}},
     finalSynthesis: {type: 'object', properties: {required: scalar('boolean'), dependsOn: stringArray}, required: ['required', 'dependsOn']},
   },
   required: ['objectiveSummary', 'assumptions', 'clarifyingQuestions', 'capabilityGaps', 'tasks', 'meetings', 'finalSynthesis'],
@@ -83,4 +85,10 @@ const standupSchema = {
   required: ['headline', 'completed', 'decisions', 'needsAttention', 'blockers', 'next', 'usageSummary'],
 };
 
-module.exports = {specialistResponseSchema, companyProposalSchema, agentDesignSchema, planSchema, participantSchema, moderatorSchema, standupSchema};
+const emailDraftSchema = {
+  type: 'object',
+  properties: {subject: scalar('string'), body: scalar('string'), concerns: stringArray, constraintChecks: stringArray, assumptions: stringArray},
+  required: ['subject', 'body', 'concerns', 'constraintChecks', 'assumptions'],
+};
+
+module.exports = {emailDraftSchema, specialistResponseSchema, companyProposalSchema, agentDesignSchema, planSchema, participantSchema, moderatorSchema, standupSchema};

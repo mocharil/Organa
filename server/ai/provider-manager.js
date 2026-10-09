@@ -25,17 +25,27 @@ function providerSetupMessage(providerId) {
   return 'The selected AI provider is not ready. Open Settings and configure a live provider, or switch to deterministic mode.';
 }
 
+// Static, credential-safe explanations for the most common non-auth failures.
+const FAILURE_KINDS = [
+  {code: 'AI_MODEL_UNAVAILABLE', status: 404, test: /(not found|does not exist|no access|not have access|unsupported model|404)/i, hint: 'The selected model is not available for this project or region. Choose another model in Settings.'},
+  {code: 'AI_RATE_LIMITED', status: 429, test: /(quota|rate.?limit|resource_exhausted|too many requests|429)/i, hint: 'The AI provider is rate-limiting requests. Wait a minute and retry.'},
+  {code: 'AI_TIMEOUT', status: 504, test: /(timeout|timed out|deadline|aborted|econnreset|etimedout)/i, hint: 'The AI provider took too long to answer. Retry; long plans can need a second attempt.'},
+  {code: 'AI_BAD_OUTPUT', status: 502, test: /(invalid structured output|json|schema|invalid_argument|response_schema|400)/i, hint: 'The model returned an answer Organa could not use. Retry; if it repeats, try another model in Settings.'},
+  {code: 'AI_NETWORK', status: 503, test: /(enotfound|econnrefused|network|fetch failed|socket|503|unavailable|overloaded)/i, hint: 'The AI provider could not be reached or is overloaded. Check your connection and retry.'},
+];
+
 function normalizeProviderError(error, providerId) {
   const message = String(error?.message || error || 'AI provider request failed.');
-  const lower = message.toLowerCase();
   const authFailure = /(credential|application default|unauthenticated|authentication|permission denied|permission_denied|api key|api_key|401|403|project.*required|not configured)/i.test(message);
-  const wrapped = new Error(authFailure ? providerSetupMessage(providerId) : `The ${LABELS[providerId] || providerId} request failed. You can retry, switch to deterministic mode, or check AI Settings.`);
+  const kind = authFailure ? null : FAILURE_KINDS.find(item => item.test.test(message));
+  const label = LABELS[providerId] || providerId;
+  const wrapped = new Error(authFailure ? providerSetupMessage(providerId) : `${label}: ${kind ? kind.hint : 'the request failed. You can retry, switch to deterministic mode, or check AI Settings.'}`);
   wrapped.status = authFailure ? 424 : 503;
-  wrapped.code = authFailure ? 'AI_PROVIDER_NOT_READY' : 'AI_PROVIDER_UNAVAILABLE';
+  wrapped.code = authFailure ? 'AI_PROVIDER_NOT_READY' : 'AI_PROVIDER_UNAVAILABLE'; // UI recovery paths key off these two codes
   wrapped.publicMessage = wrapped.message;
   wrapped.cause = error;
   wrapped.provider = providerId;
-  wrapped.details = authFailure ? {provider: providerId, setupRequired: true} : {provider: providerId, retryable: true};
+  wrapped.details = authFailure ? {provider: providerId, setupRequired: true} : {provider: providerId, retryable: true, reason: kind?.code || 'AI_REQUEST_FAILED'};
   return wrapped;
 }
 
@@ -153,6 +163,25 @@ class ProviderManager extends LlmProvider {
       : this.defaultModel(id, planner);
     const model = likelyModelFor(id, requestedModel) ? requestedModel : fallbackModel;
     return {id, provider, model};
+  }
+
+  // True when the workspace provider can run grounded web research.
+  supportsResearch(args = {}) {
+    const selected = this.resolve(args.provider, args.model, false);
+    return typeof selected.provider.research === 'function' && selected.provider.supportsResearch?.() !== false;
+  }
+
+  async research(args = {}) {
+    const selected = this.resolve(args.provider, args.model, false);
+    if (typeof selected.provider.research !== 'function') return null;
+    try {
+      const response = await selected.provider.research({...args, model: selected.model});
+      if (selected.id === this.activeProviderId) this.lastFailure = null;
+      return response;
+    } catch (error) {
+      if (selected.id === 'dry-run') throw error;
+      throw normalizeProviderError(error, selected.id);
+    }
   }
 
   async generate(args = {}) {

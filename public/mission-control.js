@@ -29,13 +29,14 @@
   const setStatus = message => { statusEl.textContent=message||''; };
   const initials = name => String(name||'AI').split(/\s+/).filter(Boolean).slice(0,3).map(x=>x[0]).join('').toUpperCase();
   const formatTime = iso => { try { return new Date(iso).toLocaleString([], {dateStyle:'short',timeStyle:'short'}); } catch { return iso||''; } };
-  const tabRoutes={company:'overview',team:'team',mission:'missions',meetings:'meetings',knowledge:'knowledge',review:'approvals',standup:'standup',goals:'goals',performance:'performance',settings:'settings'};
+  const tabRoutes={company:'overview',team:'team',mission:'missions',meetings:'meetings',knowledge:'knowledge',review:'approvals',emails:'emails',standup:'standup',goals:'goals',performance:'performance',settings:'settings'};
   const tabChrome={
     company:['Organization Overview','Your team, its progress, and the decisions waiting for you.'],
     team:['Your AI Team','Find a coworker, explore the structure, and review who owns each responsibility.'],
     mission:['Missions','Give your team an outcome and follow it through to delivery.'],
     meetings:['Meeting Room','Coordinate cross-functional AI coworkers around one shared objective.'],
     knowledge:['Knowledge','Find saved work and the evidence behind it.'],
+    emails:['Emails','Draft with AI, review, and send from your own Gmail.'],
     review:['Approval Center','Review consequential recommendations and keep human authority over important decisions.'],
     standup:['Morning Stand-up','Get an owner briefing generated from real work, blockers, decisions, and progress.'],
     goals:['Goals & North Star','Keep mission, vision, KPIs, principles, and hard constraints visible to the whole organization.'],
@@ -65,10 +66,32 @@
     }finally{clearTimeout(timer);}
   }
   async function loadAll(){
-    const [health,company,templates,northStarVersions,agents,projects,tasks,meetings,approvals,deliverables,events,standup,usageSummary,llmSettings]=await Promise.all([
-      api('GET','/api/health'),api('GET','/api/company'),api('GET','/api/company-bootstrap/templates'),api('GET','/api/north-star/versions'),api('GET','/api/agents?includeDrafts=1'),api('GET','/api/projects'),api('GET','/api/tasks'),api('GET','/api/meetings'),api('GET','/api/approvals?status=pending'),api('GET','/api/deliverables'),api('GET','/api/events?limit=80'),api('GET','/api/standups/latest'),api('GET','/api/usage/summary'),api('GET','/api/llm/settings')
+    const [health,company,templates,northStarVersions,agents,projects,tasks,meetings,approvals,deliverables,events,standup,usageSummary,llmSettings,emails]=await Promise.all([
+      api('GET','/api/health'),api('GET','/api/company'),api('GET','/api/company-bootstrap/templates'),api('GET','/api/north-star/versions'),api('GET','/api/agents?includeDrafts=1'),api('GET','/api/projects'),api('GET','/api/tasks'),api('GET','/api/meetings'),api('GET','/api/approvals?status=pending'),api('GET','/api/deliverables'),api('GET','/api/events?limit=80'),api('GET','/api/standups/latest'),api('GET','/api/usage/summary'),api('GET','/api/llm/settings'),api('GET','/api/emails').catch(()=>[])
     ]);
-    Object.assign(state,{health,company,templates,northStarVersions,agents:agents.agents||[],projects,tasks,meetings,approvals,deliverables,events,standup,usageSummary,llmSettings});
+    Object.assign(state,{health,company,templates,northStarVersions,agents:agents.agents||[],projects,tasks,meetings,approvals,deliverables,events,standup,usageSummary,llmSettings,emails});
+    updateAttentionBadge();
+  }
+  // Everything that is waiting on the owner, in the order it should be handled.
+  function attentionItems(){
+    const items=[];
+    for(const approval of state.approvals.filter(a=>a.status==='pending'))items.push({kind:'Approve',text:approval.title||'Decision waiting',tab:'review'});
+    for(const task of state.tasks.filter(t=>t.status==='blocked'))items.push({kind:'Answer',text:`${task.title} · a coworker needs information`,route:'tasks'});
+    for(const task of state.tasks.filter(t=>t.status==='failed'))items.push({kind:'Retry',text:`${task.title} · failed${task.error?': '+String(task.error).slice(0,90):''}`,route:'tasks'});
+    for(const meeting of state.meetings.filter(x=>x.status==='needs_input'))items.push({kind:'Revise',text:`${meeting.title} · meeting needs your input`,tab:'meetings'});
+    for(const email of (state.emails||[]).filter(x=>x.status==='draft'||x.status==='failed'))items.push({kind:email.status==='failed'?'Retry':'Send',text:`Email: ${email.subject}${email.status==='failed'?' · not sent':' · draft waiting for your review'}`,tab:'emails'});
+    return items;
+  }
+  function updateAttentionBadge(){
+    try{const count=attentionItems().length,base=document.title.replace(/^\(\d+\)\s*/,'');document.title=count?`(${count}) ${base}`:base;}catch{}
+  }
+  function renderToday(){
+    const items=attentionItems();
+    const panel=card(items.length?`Needs you · ${items.length}`:'Needs you','full mc-today');
+    if(!items.length){panel.append(node('p','Nothing is waiting on you. Give the team a mission, or open the Stand-up for a summary.','mc-muted'));content.append(panel);return;}
+    const list=node('ul',null,'mc-today-list');
+    items.slice(0,6).forEach(item=>{const row=node('li',null,'mc-today-item');row.append(node('span',item.kind,'mc-badge warn'),node('span',item.text));const go=button('Open','mc-secondary');go.onclick=()=>item.route?document.querySelector(`[data-organa-route="${item.route}"]`)?.click():openMissionControl({tab:item.tab});row.append(go);list.append(row);});
+    panel.append(list);if(items.length>6)panel.append(node('p',`+${items.length-6} more in Approvals and Tasks`,'mc-muted'));content.append(panel);
   }
   const sectionHead=(title,desc,actions)=>{const pageTitle=(tabChrome[state.tab]?.[0]||'').toLowerCase();if(title.toLowerCase()===pageTitle||title==='Approval Center & Traceability'){const wrap=node('div',null,'mc-page-actions');if(actions)wrap.append(actions);return wrap;}const wrap=node('div',null,'mc-section-head'),left=node('div');left.append(node('h2',title),node('p',desc));wrap.append(left);if(actions)wrap.append(actions);return wrap;};
   const card=(title,cls='')=>{const c=node('section',null,`mc-card ${cls}`.trim());if(title)c.append(node('h3',title));return c;};
@@ -102,7 +125,7 @@
     const notice=node('div',null,'mc-ai-setup-notice');const icon=node('span',copy.setupRequired?'!':'D','mc-ai-setup-icon'),body=node('div',null,'mc-ai-setup-copy');body.append(node('strong',copy.title),node('span',copy.body));const configure=button(copy.setupRequired?'Configure Gemini':'Open AI Settings','mc-secondary');configure.onclick=openAiSettings;notice.append(icon,body,configure);return notice;
   }
   function mountAiModeNotice(action){const notice=aiModeNotice(action);if(!notice)return;const first=content.firstElementChild;if(first)first.after(notice);else content.prepend(notice);}
-  function signalAiAction(action){const copy=aiModeCopy(action);if(!copy)return false;setStatus(`${copy.title}. ${copy.body}`);return true;}
+  function signalAiAction(action){const copy=aiModeCopy(action);if(!copy){setStatus(`${action}… The AI team is working, usually 20–60 seconds. You can keep this window open.`);return true;}setStatus(`${copy.title}. ${copy.body}`);return true;}
 
   function clearOnboardingRoute(){
     const url=new URL(location.href);
@@ -152,6 +175,27 @@
   const loadOnboarding=()=>onboardingController.load();
   const renderOnboarding=()=>onboardingController.render();
 
+
+  // First-run guide: shows the next few steps until the owner finishes or dismisses them.
+  function renderGettingStarted(){
+    let dismissed=false;try{dismissed=localStorage.getItem('organaGuideDismissed')==='1';}catch{}
+    const steps=[
+      ['Connect AI',usingLiveAi(),'Open Settings','settings','Gemini answers are live when this is done.'],
+      ['Build your team',state.agents.filter(agent=>agent.status==='active').length>1,'Build My Team','onboarding','Pick a template or describe your goal.'],
+      ['Give the team a mission',state.projects.length>0,'Create Mission','mission','Describe the outcome you want; the Chief of Staff plans it.'],
+      ['Review the first result',state.tasks.some(task=>task.status==='done')||state.deliverables.length>0,'Open Approvals','review','Approve or ask for changes. Nothing important happens without you.'],
+      ['Read the Stand-up',Boolean(state.standup),'Open Stand-up','standup','A short summary of what the team did.'],
+    ];
+    const finished=steps.filter(step=>step[1]).length;
+    if(dismissed||finished===steps.length)return;
+    const guide=card(`Getting started · ${finished}/${steps.length} done`,'full');
+    const list=node('ol',null,'mc-guide');
+    const next=steps.find(step=>!step[1]);
+    steps.forEach(step=>{const item=node('li',null,'mc-guide-step'+(step[1]?' done':''));item.append(node('strong',(step[1]?'✓ ':'')+step[0]),node('span',step[4],'mc-muted'));if(step===next){const go=button(step[2],'mc-primary');go.onclick=()=>step[3]==='onboarding'?openMissionControl({onboarding:true}):openMissionControl({tab:step[3]});item.append(go);}list.append(item);});
+    const hide=button('Hide this guide','mc-secondary');hide.onclick=()=>{try{localStorage.setItem('organaGuideDismissed','1');}catch{}renderCompany();};
+    guide.append(list,hide);content.append(guide);
+  }
+
   function renderCompany(){
     content.replaceChildren();
     const company=state.company?.company||{},ns=state.company?.northStar||{};
@@ -164,7 +208,9 @@
     hero.append(stats);
     const heroActions=node('div',null,'mc-actions'),missionAction=button('Create Mission','mc-primary'),chiefAction=button('View your team','mc-secondary');
     missionAction.onclick=()=>openMissionControl({tab:'mission'});chiefAction.onclick=()=>openMissionControl({tab:'team'});heroActions.append(missionAction,chiefAction);hero.append(heroActions);content.append(hero);
-    const actions=node('div',null,'mc-actions'),reset=button('Load Nusa Coffee demo','mc-secondary');actions.append(reset);
+    renderToday();
+    renderGettingStarted();
+    const actions=node('div',null,'mc-actions'),reset=button('Open the demo workspace (keeps your data)','mc-secondary');actions.append(reset);
     content.append(sectionHead('Company North Star','The direction and context guiding your team.'));
     const grid=node('div',null,'mc-grid');
     const overview=card(company.name||'No active company');overview.append(node('span',`${state.llmSettings?.providers?.find(p=>p.id===state.health?.provider)?.label||state.health?.provider||'AI'}${state.health?.model?` · ${state.health.model}`:''}`,'mc-badge active'),node('p',company.description||'Tell Organa what you want to build below.'),node('p',`${company.industry||'General'} · ${company.stage||'stage not set'}`,'mc-muted'));grid.append(overview);
@@ -180,7 +226,7 @@
     if(state.northStarVersions.length>1){const history=card('North Star history','full');for(const version of state.northStarVersions.slice(0,8)){const row=node('div',null,'mc-event');row.append(node('span',`v${version.version} · ${version.status}`),node('span',version.changeNote||version.mission||''));history.append(row);}content.append(history);}
 
     editNorth.onclick=()=>renderNorthStarEditor(ns);
-    reset.onclick=async()=>{if(!confirm('Replace the active workspace with the seeded Nusa Coffee hackathon scenario?'))return;setStatus('Resetting demo workspace…');try{await api('POST','/api/demo/reset',{});setStatus('Nusa Coffee loaded. Reloading the 3D office roster…');setTimeout(()=>location.reload(),300);}catch(err){errorBox(err);}};
+    reset.onclick=async()=>{setStatus('Preparing the demo workspace…');try{await api('POST','/api/workspaces/demo',{});setStatus('Demo workspace ready. Reloading the 3D office roster…');setTimeout(()=>location.reload(),300);}catch(err){errorBox(err);}};
   }
 
   function renderNorthStarEditor(ns){
@@ -365,6 +411,18 @@
       : [...new Set((project.planDraft?.tasks||[]).flatMap(task=>[...(task.preferredAgentIds||[]),...(task.collaborationSuggestedWith||[])]))];
     return ids.map(id=>state.agents.find(agent=>agent.id===id)).filter(Boolean);
   }
+  // Real progress from task status; nothing here is estimated.
+  function missionProgress(project){
+    const tasks=state.tasks.filter(task=>task.projectId===project.id);
+    if(!tasks.length||project.status==='draft_plan')return[];
+    const count=status=>tasks.filter(task=>task.status===status).length,done=count('done'),review=count('review'),blocked=count('blocked'),failed=count('failed'),active=tasks.filter(task=>task.status==='active');
+    const bar=node('div',null,'mc-progress');bar.setAttribute('role','progressbar');bar.setAttribute('aria-valuemin','0');bar.setAttribute('aria-valuemax',String(tasks.length));bar.setAttribute('aria-valuenow',String(done));bar.setAttribute('aria-label','Mission progress');
+    const fill=node('span');fill.style.width=`${Math.round(done/tasks.length*100)}%`;bar.append(fill);
+    const parts=[`${done} of ${tasks.length} tasks done`];
+    if(review)parts.push(`${review} waiting for your review`);if(blocked)parts.push(`${blocked} need your answer`);if(failed)parts.push(`${failed} failed`);
+    if(active.length){const who=state.agents.find(agent=>agent.id===active[0].assigneeAgentId)?.displayName;parts.push(`${who||'A coworker'} is working on "${active[0].title}"`);}
+    return[bar,node('p',parts.join(' · '),'mc-muted mc-progress-text')];
+  }
   function renderMission(){
     content.replaceChildren();
     content.append(sectionHead('Missions','Send work through your AI Chief of Staff when Organa should plan and distribute it, or assign an instruction directly to a specific AI employee when you already know who should own it.'));
@@ -385,9 +443,9 @@
       goal.input.value=readDraft('mission',{goal:state.missionDraftGoal}).goal||(state.company?.company?.name==='Nusa Coffee'?'Prepare the Nusa Coffee launch next month. Recommend positioning, channels, budget allocation under IDR 25 million, and an execution-ready web launch package.':'');
       goal.input.addEventListener('input',()=>{state.missionDraftGoal=goal.input.value;writeDraft('mission',{goal:goal.input.value});});
       const hint=node('div',null,'mc-intake-hint');hint.append(node('strong','Chief of Staff will'),node('span','understand the request → choose owners and collaborators → coordinate tasks and dependencies → bring important outputs back for human review'));
-      const planBtn=button('Plan with Chief of Staff','mc-primary');planBtn.type='submit';form.append(goal.label,hint,planBtn);flow.append(form);intake.append(flow);
+      const planBtn=button('Plan with Chief of Staff','mc-primary');planBtn.type='submit';const research=window.OrganaWorkspaces?.researchToggle();form.append(goal.label,hint,...(research?[research.label]:[]),planBtn);flow.append(form);intake.append(flow);
       goal.input.required=true;goal.input.maxLength=5000;planBtn.disabled=workflowState.missionBusy;
-      form.onsubmit=async e=>{e.preventDefault();if(!goal.input.value.trim()||workflowState.missionBusy)return;const submitted={goal:goal.input.value},payload={goal:goal.input.value.trim(),intakeMode:'chief_of_staff'};workflowState.missionBusy=true;signalAiAction('Planning and routing this mission');planBtn.disabled=true;try{await api('POST','/api/projects/plan',{...payload,clientRequestId:requestId('mission',payload)});clearDraft('mission',submitted);state.missionDraftGoal='';await refreshWorkView('mission');if(state.tab==='mission')setStatus('Mission plan ready. Review the owners and dependencies before starting.');}catch(err){workError(err,'mission');}finally{workflowState.missionBusy=false;planBtn.disabled=false;}};
+      form.onsubmit=async e=>{e.preventDefault();if(!goal.input.value.trim()||workflowState.missionBusy)return;const submitted={goal:goal.input.value},payload={goal:goal.input.value.trim(),intakeMode:'chief_of_staff',...(research?.checked?{webResearch:true}:{})};workflowState.missionBusy=true;signalAiAction('Planning and routing this mission');planBtn.disabled=true;try{await api('POST','/api/projects/plan',{...payload,clientRequestId:requestId('mission',payload)});clearDraft('mission',submitted);state.missionDraftGoal='';await refreshWorkView('mission');if(state.tab==='mission')setStatus('Mission plan ready. Review the owners and dependencies before starting.');}catch(err){workError(err,'mission');}finally{workflowState.missionBusy=false;planBtn.disabled=false;}};
     }else{
       const agents=specialistMissionAgents();
       const form=node('form',null,'mc-form mc-intake-form'),instruction=field('Instruction','textarea'),taskTitle=field('Task title (optional)','input');
@@ -409,9 +467,9 @@
       search.oninput=renderAgentChoices;renderAgentChoices();
       const governance=node('div',null,'mc-intake-hint');governance.append(node('strong','Still governed by Organa'),node('span','The instruction is logged, traceable, shown in Mission Control and Stand-up, counted in model usage, and the output returns for human review.'));
       const sendBtn=button('Send instruction','mc-primary');sendBtn.type='submit';if(!agents.length)sendBtn.disabled=true;
-      form.append(taskTitle.label,instruction.label,chooser,governance,sendBtn);intake.append(form);
+      const directResearch=window.OrganaWorkspaces?.researchToggle();form.append(taskTitle.label,instruction.label,chooser,governance,...(directResearch?[directResearch.label]:[]),sendBtn);intake.append(form);
       sendBtn.disabled=workflowState.directBusy||!agents.length;
-      form.onsubmit=async e=>{e.preventDefault();const brief=instruction.input.value.trim(),assignee=agents.find(agent=>agent.id===state.missionDirectAgentId);if(!brief||!assignee||workflowState.directBusy)return;const submitted={title:taskTitle.input.value,brief:instruction.input.value,agentId:assignee.id},payload={title:taskTitle.input.value.trim()||missionInstructionTitle(brief),brief,assigneeAgentId:assignee.id,approvalPolicy:'review_output',intakeMode:'direct_agent'};workflowState.directBusy=true;signalAiAction('Executing this direct assignment');sendBtn.disabled=true;try{await api('POST','/api/tasks',{...payload,clientRequestId:requestId('direct',payload)});clearDraft('direct',submitted);instruction.input.value='';taskTitle.input.value='';await refreshWorkView('mission');if(state.tab==='mission')setStatus(`Instruction sent to ${assignee.displayName}. The output returns here for review.`);}catch(err){workError(err,'mission');}finally{workflowState.directBusy=false;sendBtn.disabled=false;}};
+      form.onsubmit=async e=>{e.preventDefault();const brief=instruction.input.value.trim(),assignee=agents.find(agent=>agent.id===state.missionDirectAgentId);if(!brief||!assignee||workflowState.directBusy)return;const submitted={title:taskTitle.input.value,brief:instruction.input.value,agentId:assignee.id},payload={title:taskTitle.input.value.trim()||missionInstructionTitle(brief),brief,assigneeAgentId:assignee.id,approvalPolicy:'review_output',intakeMode:'direct_agent',...(directResearch?.checked?{webResearch:true}:{})};workflowState.directBusy=true;signalAiAction('Executing this direct assignment');sendBtn.disabled=true;try{await api('POST','/api/tasks',{...payload,clientRequestId:requestId('direct',payload)});clearDraft('direct',submitted);instruction.input.value='';taskTitle.input.value='';await refreshWorkView('mission');if(state.tab==='mission')setStatus(`Instruction sent to ${assignee.displayName}. The output returns here for review.`);}catch(err){workError(err,'mission');}finally{workflowState.directBusy=false;sendBtn.disabled=false;}};
     }
     content.append(intake);
 
@@ -419,7 +477,7 @@
     if(directTasks.length){const directCard=card(`Direct assignments · ${directTasks.length}`,'full mc-direct-history'),intro=node('p','Focused instructions sent straight to an AI employee. These bypass Chief of Staff routing but remain inside the same Organa governance and audit trail.','mc-muted');directCard.append(intro);const rows=node('div',null,'mc-direct-history-list');directTasks.slice(0,8).forEach(task=>{const agent=state.agents.find(a=>a.id===task.assigneeAgentId),row=node('article',null,'mc-direct-history-row'),identity=node('div',null,'mc-direct-history-main');identity.append(node('strong',task.title),node('span',`${agentLabel(agent)} · ${formatTime(task.createdAt)}`));const side=node('div',null,'mc-actions');side.append(badge(task.status));const open=button('Open task','mc-secondary');open.onclick=()=>window.officeTasks?.openTask(task.id);side.append(open);row.append(identity,side);rows.append(row);});directCard.append(rows);content.append(directCard);}
 
     if(!state.projects.length){if(!directTasks.length){const empty=node('div',null,'mc-empty'),inner=node('div');inner.append(node('strong','Your organization is ready for its first piece of work.'),node('span','Ask the Chief of Staff for cross-functional work, or assign a focused instruction directly to an AI employee.'));empty.append(inner);content.append(empty);}return;}
-    for(const project of state.projects){const c=card(project.title,'full mc-mission-card');c.dataset.collectionId=project.id;c.dataset.projectId=project.id;const top=node('div',null,'mc-actions');top.append(badge(project.status),node('span','Chief of Staff routed','mc-route-label'));if(project.status==='draft_plan'){const activate=button(workflowState.activationBusy.has(project.id)?'Starting mission…':'Start Mission','mc-primary');activate.dataset.projectActivate=project.id;activate.disabled=workflowState.activationBusy.has(project.id);activate.onclick=async()=>{if(workflowState.activationBusy.has(project.id))return;workflowState.activationBusy.add(project.id);activate.disabled=true;signalAiAction('Starting this mission');if(usingLiveAi())setStatus('Starting the mission and assigning ready work…');try{await api('POST',`/api/projects/${project.id}/activate-plan`,{});await refreshWorkView('mission');if(state.tab==='mission')setStatus('Mission started. AI coworkers are working in dependency order.');}catch(err){workError(err,'mission');}finally{workflowState.activationBusy.delete(project.id);activate.disabled=false;const live=content.querySelector(`[data-project-activate="${CSS.escape(project.id)}"]`);if(live){live.disabled=false;live.textContent='Start Mission';}}};top.append(activate);}const openTasks=button('Open task review','mc-secondary');openTasks.onclick=()=>{dialog.close();window.officeTasks?.open();};top.append(openTasks);c.append(top,node('p',project.objective||project.planDraft?.objectiveSummary||''));
+    for(const project of state.projects){const c=card(project.title,'full mc-mission-card');c.dataset.collectionId=project.id;c.dataset.projectId=project.id;const top=node('div',null,'mc-actions');top.append(badge(project.status),node('span','Chief of Staff routed','mc-route-label'));if(project.status==='draft_plan'){const activate=button(workflowState.activationBusy.has(project.id)?'Starting mission…':'Start Mission','mc-primary');activate.dataset.projectActivate=project.id;activate.disabled=workflowState.activationBusy.has(project.id);activate.onclick=async()=>{if(workflowState.activationBusy.has(project.id))return;workflowState.activationBusy.add(project.id);activate.disabled=true;signalAiAction('Starting this mission');if(usingLiveAi())setStatus('Starting the mission and assigning ready work…');try{await api('POST',`/api/projects/${project.id}/activate-plan`,{});await refreshWorkView('mission');if(state.tab==='mission')setStatus('Mission started. AI coworkers are working in dependency order.');}catch(err){workError(err,'mission');}finally{workflowState.activationBusy.delete(project.id);activate.disabled=false;const live=content.querySelector(`[data-project-activate="${CSS.escape(project.id)}"]`);if(live){live.disabled=false;live.textContent='Start Mission';}}};top.append(activate);}const openTasks=button('Open task review','mc-secondary');openTasks.onclick=()=>{dialog.close();window.officeTasks?.open();};top.append(openTasks);c.append(top,...missionProgress(project),node('p',project.objective||project.planDraft?.objectiveSummary||''));
       if(project.status==='needs_input')c.append(missionClarificationForm(project));
       const routingAgents=projectRoutingAgents(project);if(routingAgents.length){const routing=node('div',null,'mc-routing-preview'),routingHead=node('div',null,'mc-routing-preview-head');routingHead.append(node('strong','Team assembled by Chief of Staff'),node('span',project.routing?.rationale||'Owners and collaborators are selected from the task requirements, skills, and current organization.'));routing.append(routingHead);const people=node('div',null,'mc-routing-people');const coordinator=state.agents.find(agent=>agent.id===project.routing?.coordinatorAgentId)||activeMissionAgents().find(isChiefOfStaff);if(coordinator){const chip=node('span',null,'mc-routing-person coordinator');chip.append(node('b',coordinator.displayName),node('small','Chief of Staff · coordinates'));people.append(chip);}routingAgents.filter(agent=>agent.id!==coordinator?.id).forEach(agent=>{const chip=node('span',null,'mc-routing-person');chip.append(node('b',agent.displayName),node('small',agent.role));people.append(chip);});routing.append(people);c.append(routing);}
       const projectTasks=state.tasks.filter(t=>t.projectId===project.id);if(project.status==='draft_plan'){const dag=node('div',null,'mc-dag');(project.planDraft?.tasks||[]).forEach((t,i)=>{const owner=state.agents.find(a=>a.id===t.preferredAgentIds?.[0]),collaborators=(t.collaborationSuggestedWith||[]).map(id=>state.agents.find(a=>a.id===id)).filter(Boolean),r=node('div',null,'mc-task-node');r.append(node('span',i+1,'mc-node-number'));const mid=node('div');mid.append(node('h4',t.title),node('p',t.description||''),node('p',`${owner?`Owner: ${agentLabel(owner)}`:'Owner will be resolved'}${collaborators.length?` · Collaborators: ${collaborators.map(a=>a.displayName).join(', ')}`:''}`,'mc-owner-line'),node('p',t.dependsOn?.length?`Depends on: ${t.dependsOn.join(', ')}`:'Starts immediately','mc-deps'));if(t.reason)mid.append(node('p',`Why this route: ${t.reason}`,'mc-routing-reason'));r.append(mid,badge(t.approvalPolicy==='none'?'planned':'review'));dag.append(r);});c.append(dag);}else if(projectTasks.length){const done=projectTasks.filter(t=>t.status==='done').length,progress=node('div',null,'mc-progress');progress.append(node('span'));progress.firstChild.style.width=`${Math.round(done/projectTasks.length*100)}%`;c.append(node('p',`${done}/${projectTasks.length} tasks completed`,'mc-muted'),progress);const dag=node('div',null,'mc-dag');projectTasks.sort((a,b)=>a.createdAt.localeCompare(b.createdAt)).forEach((t,i)=>{const agent=state.agents.find(a=>a.id===t.assigneeAgentId),r=node('div',null,'mc-task-node');r.append(node('span',i+1,'mc-node-number'));const mid=node('div');mid.append(node('h4',t.title),node('p',`${agent?.displayName||'Agent'} · ${agent?.role||''}`),node('p',t.dependencyIds?.length?`Dependencies: ${t.dependencyIds.map(d=>projectTasks.find(x=>x.id===d)?.title||d).join(' → ')}`:'No dependencies','mc-deps'));r.append(mid,badge(t.status));dag.append(r);});c.append(dag);}content.append(c);}
@@ -522,7 +580,7 @@
       state.knowledgeSearch=search.value;const query=search.value.trim().toLowerCase();
       const items=state.deliverables.filter(d=>{const version=d.versions?.find(v=>v.id===d.currentVersionId)||d.versions?.at(-1);return !query||`${d.title} ${version?.content||''} ${d.status||''}`.toLowerCase().includes(query);});
       resultCount.textContent=`${items.length} of ${state.deliverables.length} documents`;if(!items.length){const action=button(query?'Clear search':'Create a mission','mc-secondary');action.onclick=()=>{if(query){search.value='';renderList();search.focus();}else openMissionControl({tab:'mission'});};const empty=ui.emptyState(query?'No knowledge matches your search.':'Your knowledge base will grow as missions produce durable work.',query?'Try another keyword or clear your search.':'Saved deliverables will appear here as your team works.',action);empty.classList.add('full');list.append(empty);return;}
-      for(const d of items){const version=d.versions?.find(v=>v.id===d.currentVersionId)||d.versions?.at(-1),c=card(d.title,'full mc-knowledge-card');c.append(badge(d.status),ui.documentView(version?.content||'No textual content yet.','mc-deliverable'));const meta=node('div',null,'mc-actions'),why=button('View traceability','mc-secondary');meta.append(why);c.append(meta);why.onclick=async()=>{why.disabled=true;try{const data=await api('GET',`/api/deliverables/${d.id}/why`),panel=node('div',null,'mc-why');panel.append(node('strong','Why this exists'));const ul=node('ul');[`Goals: ${data.goals.map(g=>g.title).join(', ')||'none'}`,`Evidence: ${data.evidenceRefs.join(', ')||'none'}`,`Assumptions: ${data.assumptions.join(' · ')||'none'}`,`Collaborators: ${data.collaborators.map(a=>a.displayName).join(', ')||'none'}`,`Decision summary: ${data.decisionSummary||'none'}`].forEach(x=>ul.append(node('li',x)));panel.append(ul);c.append(panel);why.remove();}catch(err){setStatus(err.message);why.disabled=false;}};list.append(c);}
+      for(const d of items){const version=d.versions?.find(v=>v.id===d.currentVersionId)||d.versions?.at(-1),c=card(d.title,'full mc-knowledge-card');c.append(badge(d.status),ui.documentView(version?.content||'No textual content yet.','mc-deliverable'));if(window.OrganaWorkspaces)c.append(window.OrganaWorkspaces.deliverableExtras(d));const meta=node('div',null,'mc-actions'),why=button('View traceability','mc-secondary');meta.append(why);c.append(meta);why.onclick=async()=>{why.disabled=true;try{const data=await api('GET',`/api/deliverables/${d.id}/why`),panel=node('div',null,'mc-why');panel.append(node('strong','Why this exists'));const ul=node('ul');[`Goals: ${data.goals.map(g=>g.title).join(', ')||'none'}`,`Evidence: ${data.evidenceRefs.join(', ')||'none'}`,`Assumptions: ${data.assumptions.join(' · ')||'none'}`,`Collaborators: ${data.collaborators.map(a=>a.displayName).join(', ')||'none'}`,`Decision summary: ${data.decisionSummary||'none'}`].forEach(x=>ul.append(node('li',x)));panel.append(ul);c.append(panel);why.remove();}catch(err){setStatus(err.message);why.disabled=false;}};list.append(c);}
     };
     search.oninput=renderList;renderList();
     const learning=card('Recent learning signals','full');const useful=state.events.filter(e=>['task.completed','meeting.completed','approval.resolved','deliverable.created','deliverable.updated'].includes(e.type)).slice(0,12);if(!useful.length)learning.append(node('p','No learning signals yet. Finish a mission or approve a deliverable and Organa will retain the result here.','mc-muted'));else useful.forEach(e=>{const row=node('div',null,'mc-event');row.append(node('time',formatTime(e.createdAt)),node('span',`${({'task.completed':'Task completed','meeting.completed':'Meeting completed','approval.resolved':'Decision reviewed','deliverable.created':'Deliverable saved','deliverable.updated':'Deliverable updated'})[e.type]||e.type}${e.payload?.title?` · ${e.payload.title}`:''}`));learning.append(row);});content.append(learning);
@@ -555,7 +613,7 @@
   function renderReview(){
     content.replaceChildren();content.append(sectionHead('Approval Center & Traceability','Important decisions come to you. Review recommendations, request changes, and inspect the goals, evidence, assumptions, and collaborators behind each deliverable.'));
     const pending=card(`Pending approvals · ${state.approvals.length}`,'full');if(!state.approvals.length)pending.append(node('p','You are all caught up. No decision needs your approval right now.','mc-muted'));for(const approval of state.approvals){const row=node('div',null,'mc-card full mc-approval-record');row.dataset.approvalId=approval.id;row.dataset.collectionId=approval.id;row.append(badge(approval.status),node('h3',approval.title),node('p',approval.summary||''));const acts=node('div',null,'mc-actions'),approve=button(workflowState.approvalBusy.has(approval.id)?'Saving review…':'Approve','mc-primary'),revise=button('Request revision','mc-secondary');approve.disabled=revise.disabled=workflowState.approvalBusy.has(approval.id);approve.onclick=()=>resolveApproval(approval,'approve');revise.onclick=()=>approvalRevisionForm(row,approval);acts.append(approve,revise);if(['task','meeting','project'].includes(approval.entityType)&&approval.entityId){const type=approval.entityType,records=type==='task'?state.tasks:type==='meeting'?state.meetings:state.projects,source=records.find(record=>record.id===approval.entityId);row.append(node('p',`Source: ${type}${source?.title?' · '+source.title:''}`,'mc-muted'));const open=button(`Open ${type}`,'mc-secondary');open.onclick=()=>openStandupRef(`${type}:${approval.entityId}`);acts.append(open);}row.append(acts);pending.append(row);}content.append(pending);
-    const deliveries=card(`Deliverables · ${state.deliverables.length}`,'full');if(!state.deliverables.length)deliveries.append(node('p','No deliverables yet. Completed mission work will appear here with its traceability.','mc-muted'));for(const d of state.deliverables.slice(0,20)){const box=node('article',null,'mc-card full'),version=d.versions?.find(v=>v.id===d.currentVersionId)||d.versions?.at(-1);box.append(badge(d.status),node('h3',d.title),ui.documentView(version?.content||'No textual content.','mc-deliverable'));const why=button('Why did the team do this?','mc-secondary');box.append(why);why.onclick=async()=>{why.disabled=true;try{const data=await api('GET',`/api/deliverables/${d.id}/why`),panel=node('div',null,'mc-why');panel.append(node('strong','Traceability'));const list=node('ul');[`Goals: ${data.goals.map(g=>g.title).join(', ')||'none'}`,`Evidence: ${data.evidenceRefs.join(', ')||'none'}`,`Assumptions: ${data.assumptions.join(' · ')||'none'}`,`Collaborators: ${data.collaborators.map(a=>a.displayName).join(', ')||'none'}`,`Decision summary: ${data.decisionSummary||'none'}`].forEach(x=>list.append(node('li',x)));panel.append(list);box.append(panel);why.remove();}catch(err){setStatus(err.message);why.disabled=false;}};deliveries.append(box);}content.append(deliveries);
+    const deliveries=card(`Deliverables · ${state.deliverables.length}`,'full');if(!state.deliverables.length)deliveries.append(node('p','No deliverables yet. Completed mission work will appear here with its traceability.','mc-muted'));for(const d of state.deliverables.slice(0,20)){const box=node('article',null,'mc-card full'),version=d.versions?.find(v=>v.id===d.currentVersionId)||d.versions?.at(-1);box.append(badge(d.status),node('h3',d.title),ui.documentView(version?.content||'No textual content.','mc-deliverable'));if(window.OrganaWorkspaces)box.append(window.OrganaWorkspaces.deliverableExtras(d));const why=button('Why did the team do this?','mc-secondary');box.append(why);why.onclick=async()=>{why.disabled=true;try{const data=await api('GET',`/api/deliverables/${d.id}/why`),panel=node('div',null,'mc-why');panel.append(node('strong','Traceability'));const list=node('ul');[`Goals: ${data.goals.map(g=>g.title).join(', ')||'none'}`,`Evidence: ${data.evidenceRefs.join(', ')||'none'}`,`Assumptions: ${data.assumptions.join(' · ')||'none'}`,`Collaborators: ${data.collaborators.map(a=>a.displayName).join(', ')||'none'}`,`Decision summary: ${data.decisionSummary||'none'}`].forEach(x=>list.append(node('li',x)));panel.append(list);box.append(panel);why.remove();}catch(err){setStatus(err.message);why.disabled=false;}};deliveries.append(box);}content.append(deliveries);
   }
   function approvalRevisionForm(row,approval){if(row.querySelector('.mc-approval-revision'))return;const form=node('form',null,'mc-form mc-approval-revision'),feedback=field('Revision feedback','textarea',readDraft('approval:'+approval.id,{text:''}).text),submit=button('Send revision request','mc-primary'),cancel=button('Cancel','mc-secondary');feedback.input.required=true;feedback.input.maxLength=3000;feedback.input.oninput=()=>writeDraft('approval:'+approval.id,{text:feedback.input.value});submit.type='submit';const actions=node('div',null,'mc-actions');actions.append(submit,cancel);form.append(feedback.label,actions);row.append(form);cancel.onclick=()=>form.remove();form.onsubmit=e=>{e.preventDefault();if(feedback.input.value.trim())resolveApproval(approval,'request-revision',feedback.input.value);};feedback.input.focus();}
   async function resolveApproval(approval,action,note=''){
@@ -569,6 +627,12 @@
     finally{workflowState.approvalBusy.delete(approval.id);if(state.tab==='review')content.querySelector(`[data-approval-id="${CSS.escape(approval.id)}"] .mc-actions`)?.querySelectorAll('button').forEach(button=>{button.disabled=false;if(button.textContent==='Saving review…')button.textContent='Approve';});}
   }
 
+  function renderEmails(){
+    content.replaceChildren();
+    content.append(sectionHead('Emails','Draft with AI, review, and send from your own Gmail.'));
+    if(window.OrganaEmails)window.OrganaEmails.render(content,{state,setStatus,reload:()=>refreshWorkView('emails')});
+    else content.append(node('p','Emails are unavailable right now. Reload the page.','mc-muted'));
+  }
   function renderStandup(){
     content.replaceChildren();
     const actions=node('div',null,'mc-actions'),generate=button(workflowState.standupBusy?'Preparing…':state.standup?'Refresh Stand-Up':'Start Stand-Up','mc-primary');generate.id='mcGenerateStandup';generate.disabled=workflowState.standupBusy;actions.append(generate);
@@ -622,12 +686,13 @@
     vertexAuth.append(node('strong','Gemini on Vertex AI · recommended'),node('p','Supports Google Cloud service accounts and Application Default Credentials. Local options: GOOGLE_APPLICATION_CREDENTIALS, GOOGLE_SERVICE_ACCOUNT_JSON, or GOOGLE_SERVICE_ACCOUNT_JSON_BASE64. On Cloud Run, attach a runtime service account instead of shipping a key file.','mc-muted'),node('code','ORGANA_LLM_PROVIDER=vertex\nGOOGLE_CLOUD_PROJECT=your-project\nGOOGLE_APPLICATION_CREDENTIALS=/path/service-account.json'));
     apiAuth.append(node('strong','Gemini Developer API'),node('p','Uses an API key instead of a Google Cloud service account. Keep the key on the server.','mc-muted'),node('code','ORGANA_LLM_PROVIDER=gemini\nGEMINI_API_KEY=your-server-side-key'));
     authGrid.append(vertexAuth,apiAuth);const guide=node('details',null,'mc-connection-guide');guide.append(node('summary','Server credentials and connection instructions'),authGrid);security.append(guide);const rows=node('div',null,'mc-list');for(const p of providers){const row=node('div',null,'mc-event');row.append(node('span',p.configured?'CONFIGURED':'NOT CONFIGURED'),node('span',`${p.label} · ${p.authMode}`));rows.append(row);}security.append(rows);content.append(security);
+    window.OrganaWorkspaces?.mountSettings(content,{setStatus});
     form.onsubmit=async e=>{e.preventDefault();save.disabled=true;setStatus('Updating the workspace AI provider…');try{state.llmSettings=await api('PATCH','/api/llm/settings',{provider:providerSelect.value,model:model.input.value.trim(),plannerModel:planner.input.value.trim()});state.health=await api('GET','/api/health');document.dispatchEvent(new CustomEvent('organa:ai-settings-changed'));setStatus(`Now using ${state.llmSettings.provider}${state.llmSettings.model?` · ${state.llmSettings.model}`:''}. New model calls use this setting.`);renderSettings();}catch(err){setStatus(err.message);errorBox(err);}finally{save.disabled=false;}};
   }
 
   function mountCollection(name,records,selector){const statuses=[...new Set(records.map(record=>record.status))].map(status=>[status,status==='draft_plan'?'Ready to start':status==='needs_input'?'Needs your input':badge(status).textContent]);const tools=ui.collectionTools({name,records,root:content,selector,statuses,saved:collectionFilters[name]||{},onChange:values=>collectionFilters[name]=values});const first=content.querySelector(selector);if(first)first.before(tools.toolbar,tools.empty);else content.append(tools.toolbar,tools.empty);tools.apply();}
   function viewSignature(){
-    const fields={company:['company','northStarVersions','agents','projects','tasks','approvals','deliverables'],team:['agents','tasks','usageSummary'],mission:['projects','tasks','agents','company'],meetings:['meetings','agents','tasks','deliverables'],knowledge:['deliverables'],review:['approvals','deliverables'],standup:['standup'],goals:['company','northStarVersions'],performance:['tasks','projects','agents','deliverables','usageSummary'],settings:['llmSettings']};
+    const fields={company:['company','northStarVersions','agents','projects','tasks','approvals','deliverables'],team:['agents','tasks','usageSummary'],mission:['projects','tasks','agents','company'],meetings:['meetings','agents','tasks','deliverables'],knowledge:['deliverables'],review:['approvals','deliverables'],emails:['emails','deliverables'],standup:['standup'],goals:['company','northStarVersions'],performance:['tasks','projects','agents','deliverables','usageSummary'],settings:['llmSettings']};
     return JSON.stringify([state.tab,state.llmSettings,...(fields[state.tab]||[]).map(key=>state[key])]);
   }
   function render({preservePosition=false}={}){
@@ -636,7 +701,7 @@
     delete content.dataset.northStarReview;
     syncGlobalNavigation(state.tab);
     if(!preservePosition&&matchMedia('(max-width:640px)').matches)document.querySelector('[data-organa-route].active')?.scrollIntoView({block:'nearest',inline:'nearest'});
-    ({company:renderCompany,team:renderTeam,mission:renderMission,meetings:renderMeetings,knowledge:renderKnowledge,review:renderReview,standup:renderStandup,goals:renderGoals,performance:renderPerformance,settings:renderSettings}[state.tab]||renderCompany)();
+    ({company:renderCompany,team:renderTeam,mission:renderMission,meetings:renderMeetings,knowledge:renderKnowledge,review:renderReview,emails:renderEmails,standup:renderStandup,goals:renderGoals,performance:renderPerformance,settings:renderSettings}[state.tab]||renderCompany)();
     if(state.tab==='mission'&&state.projects.length)mountCollection('missions',state.projects,'.mc-mission-card');if(state.tab==='meetings'&&state.meetings.length)mountCollection('meetings',state.meetings,'.mc-meeting-card');if(state.tab==='review'&&state.approvals.length)mountCollection('approvals',state.approvals,'.mc-approval-record');
     if(['company','team','mission','meetings','standup'].includes(state.tab))mountAiModeNotice({company:'Organization design',team:'AI employee design',mission:'Mission planning and execution',meetings:'AI collaboration',standup:'AI Stand-up summarization'}[state.tab]);
     lastRenderedSignature=viewSignature();
@@ -687,4 +752,10 @@
   content.addEventListener('input',markDirty);content.addEventListener('change',markDirty);
   const canRefreshView=()=>dialog.open&&!state.onboardingMode&&!content.inert&&!content.dataset.northStarReview&&!workflowState.standupBusy&&!workflowState.meetingBusy.size&&!workflowState.approvalBusy.size&&!workflowState.clarificationBusy.size&&!workflowState.employeeBusy.size&&!workflowState.hiringBusy&&!['company','team'].includes(state.tab)&&!content.querySelector('form[data-dirty="true"],form button[type="submit"]:disabled,details[open],.mc-why,.mc-error')&&!document.activeElement?.matches('input,textarea,select,[contenteditable="true"]');
   setInterval(async()=>{if(!canRefreshView()||polling)return;polling=true;const requestedNavigation=navigationVersion;try{await loadAll();if(requestedNavigation===navigationVersion&&canRefreshView()&&viewSignature()!==lastRenderedSignature)render({preservePosition:true});}catch{}finally{polling=false;}},3000);
+  // Keeps the tab title ("(3) Organa …") current while the dashboard is closed, so you notice work waiting for you.
+  async function pollAttention(){
+    if(dialog.open||document.hidden)return;
+    try{const [approvals,tasks,meetings]=await Promise.all([api('GET','/api/approvals?status=pending'),api('GET','/api/tasks'),api('GET','/api/meetings')]);Object.assign(state,{approvals,tasks,meetings});updateAttentionBadge();}catch{}
+  }
+  setTimeout(pollAttention,2500);setInterval(pollAttention,20000);
 })();

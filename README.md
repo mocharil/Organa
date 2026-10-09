@@ -12,6 +12,13 @@ Workspace pages use one global navigation, readable cards, searchable collection
 
 See [UI changes and screenshots](docs/UI_REFRESH_QA.md), [current verification results](docs/END_TO_END_QA.md), and [the local Gemini test guide](docs/LOCAL_LIVE_TEST.md).
 
+## Guides
+
+- [Using Organa every day](docs/DAILY_USE.md): rhythm, workspaces, backups and troubleshooting.
+- [3-minute demo script](docs/DEMO_SCRIPT.md): a ready walkthrough for judges.
+- [Google Docs and Sheets setup](docs/GOOGLE_SETUP.md): optional, one-time, about 10 minutes.
+- [Quality check](scripts/quality-eval.cjs): `npm run test:quality` runs a live AI answer-quality evaluation.
+
 ## Design source of truth
 
 All product and marketing UI work must follow [`docs/ORGANA_MASTER_DESIGN_SYSTEM.md`](docs/ORGANA_MASTER_DESIGN_SYSTEM.md). It is the canonical visual reference for brand tokens, spacing, components, agent states, orbit/node interaction language, motion, accessibility, responsive behavior, and 3D-office styling. When older styles conflict with it, the master design system wins.

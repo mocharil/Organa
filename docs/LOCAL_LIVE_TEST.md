@@ -1,47 +1,51 @@
-# Uji Gemini di komputer lokal
+# Testing Gemini on your local computer
 
-Paket v3.18.5 menyertakan runner HTTP untuk 17 alur dengan Gemini/Vertex. Pengujian dalam paket ini menggunakan provider demo; autentikasi Google dan kualitas output model live belum diuji.
+The v3.18.5 package includes an HTTP runner for 17 flows with Gemini/Vertex. The tests shipped in this package use the demo provider; Google authentication and live model output quality were not tested in the package itself.
 
-## Persiapan
+## Setup
 
-Gunakan Node.js 22 atau lebih baru dan jalankan `npm ci`. Simpan konfigurasi pada `.env` lokal. Untuk service account, isi:
+Use Node.js 22 or later and run `npm ci`. Keep configuration in a local `.env`. For a service account, set:
 
 ```dotenv
 ORGANA_LLM_PROVIDER=vertex
 ORGANA_DRY_RUN=0
 GOOGLE_CLOUD_PROJECT=your-project
-GOOGLE_CLOUD_LOCATION=asia-southeast1
-GOOGLE_APPLICATION_CREDENTIALS=/absolute/path/service-account.json
+GOOGLE_CLOUD_LOCATION=global
+VERTEX_MODEL=gemini-3.8-flash
+VERTEX_PLANNER_MODEL=gemini-3.8-flash
+GOOGLE_SERVICE_ACCOUNT_JSON_BASE64=<base64 of the service-account JSON>
 ```
 
-Gunakan akun dan project yang dapat mengakses model Vertex yang dipilih. Runner mewarisi konfigurasi server lokal, termasuk model yang Anda pilih. Alternatif Gemini Developer API memakai `ORGANA_LLM_PROVIDER=gemini` dan `GEMINI_API_KEY` pada server. Simpan kredensial di komputer Anda; tidak perlu mengirimkannya ke percakapan.
+Alternatively, use `GOOGLE_APPLICATION_CREDENTIALS=/absolute/path/service-account.json`. Be aware that an operating-system-level `GOOGLE_APPLICATION_CREDENTIALS` variable takes precedence over `.env`, so requests may silently use a different service account (this produces a 403 even when your key is valid). The base64 variable is checked first and avoids that problem.
 
-## Menjalankan
+Use an account and project that can access the Vertex model you selected. The runner inherits the local server configuration, including the model you choose. A model saved from the Settings page is stored in `data/state.json` and overrides `.env` for the running app, so check Settings if the model shown differs from your configuration. The Gemini Developer API alternative uses `ORGANA_LLM_PROVIDER=gemini` and `GEMINI_API_KEY` on the server. Keep credentials on your own computer; there is no need to send them in a conversation.
+
+## Running
 
 ```bash
 npm run test:live -- --preflight
 npm run test:live
 ```
 
-Preflight hanya memeriksa konfigurasi. Pesan “ready” belum membuktikan autentikasi berhasil. Uji live berikutnya melakukan request model nyata dan dapat memakai kuota berbayar.
+Preflight only checks configuration. A "ready" message does not yet prove authentication works. The live test that follows makes real model requests and can use paid quota.
 
-Runner membuat server sementara pada loopback dengan data Nusa Coffee yang terisolasi. Runner tidak memerlukan `npm start` dan tidak mengubah `data/state.json` atau `.env` Anda. Setelah selesai atau dibatalkan, server dihentikan dan data sementara dibersihkan.
+The runner creates a temporary server on loopback with isolated Nusa Coffee data. It does not need `npm start` and does not change your `data/state.json` or `.env`. When it finishes or is cancelled, the server is stopped and the temporary data is cleaned up.
 
-## Batas dan hasil
+## Limits and results
 
-Default batasnya 30 panggilan model, 8.192 token output per panggilan, 90 detik per request SDK, satu percobaan SDK, dan 20 menit untuk keseluruhan run. Reservasi panggilan ditulis sebelum request; request yang gagal tetap memakai anggaran. Anggaran bertahan saat server test direstart. Batas panggilan bisa diatur 1–200 dan token 1–32.768 melalui variabel `ORGANA_LIVE_CHECK_MAX_CALLS` dan `ORGANA_LIVE_CHECK_MAX_TOKENS`. Nilai token ini membatasi output, bukan seluruh token input atau biaya dalam mata uang.
+The default limits are 30 model calls, 8,192 output tokens per call, 90 seconds per SDK request, one SDK attempt, and 20 minutes for the whole run. The call reservation is written before the request; a failed request still uses budget. The budget survives a restart of the test server. The call limit can be set between 1 and 200 and the token limit between 1 and 32,768 through the `ORGANA_LIVE_CHECK_MAX_CALLS` and `ORGANA_LIVE_CHECK_MAX_TOKENS` variables. The token value limits output, not total input tokens or cost in any currency.
 
-Hasil tersimpan dalam `.local-qa/live-<timestamp>/results.json`, `report.md`, dan `budget.json`. Error direduksi agar kredensial yang diketahui, private key dan bearer token tidak tampil. Folder hasil lokal diabaikan Git. Jangan membagikan laporan yang masih berisi konteks pekerjaan privat tanpa memeriksanya.
+Results are saved in `.local-qa/live-<timestamp>/results.json`, `report.md` and `budget.json`. Errors are redacted so known credentials, private keys and bearer tokens are not shown. The local results folder is ignored by Git. Do not share a report that still contains private work context without checking it first.
 
-Alur yang dicakup: health/provider/storage, perusahaan dan team, direct instruction, retry task, revisi dan histori, human approval, Knowledge dan provenance, rencana Chief of Staff, retry rencana, retry aktivasi, dependency dan review task, meeting, approval meeting yang tepat, penolakan approval lama, Stand-up, usage/events, serta persistensi setelah restart.
+Flows covered: health/provider/storage, company and team, direct instruction, task retry, revision and history, human approval, Knowledge and provenance, Chief of Staff plan, plan retry, activation retry, task dependency and review, meeting, exact meeting approval, rejection of an old approval, Stand-up, usage/events, and persistence after restart.
 
-Jika model meminta klarifikasi, menghasilkan rencana tidak valid, tidak menjadwalkan meeting, atau gagal autentikasi, runner menyimpan hasil parsial dan berhenti. Runner tidak menyatakan semua alur live lolos pada kondisi tersebut. Pertanyaan dapat dijawab melalui UI Missions/Tasks untuk pemeriksaan manual.
+If the model asks for clarification, produces an invalid plan, does not schedule a meeting, or fails authentication, the runner saves partial results and stops. It does not claim that all live flows passed in those conditions. Questions can be answered through the Missions/Tasks UI for manual checking.
 
-## Memeriksa runner tanpa request Google
+## Checking the runner without Google requests
 
 ```bash
 npm run test:live:runner
 node scripts/live-check.cjs --fixture
 ```
 
-Tujuh test runner memeriksa preflight, redaksi kredensial, batas panggilan/token, failure budget, 17 alur HTTP fixture, dan pembatalan. Mode `--fixture` secara eksplisit memakai provider demo dan menyimpan `liveExecutionVerified: false`. Hasil fixture yang disertakan ada di `docs/qa/live-fixture/`.
+The seven runner tests check preflight, credential redaction, call/token limits, failure budget, the 17 fixture HTTP flows, and cancellation. The `--fixture` mode explicitly uses the demo provider and records `liveExecutionVerified: false`. The bundled fixture results are in `docs/qa/live-fixture/`.

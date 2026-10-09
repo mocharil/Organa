@@ -8,6 +8,7 @@
     meetings: 'meetings',
     knowledge: 'knowledge',
     approvals: 'review',
+    emails: 'emails',
     standup: 'standup',
     goals: 'goals',
     performance: 'performance',
@@ -95,6 +96,21 @@
   mission?.addEventListener('close', () => { if (!mission.open) setActive('office'); });
   routeButtons.forEach(button => button.setAttribute('aria-label', button.textContent.trim()));
   setActive('office');
+
+  // Simple menu: hide advanced pages for everyday use. Lite 3D: cheaper rendering for slower computers.
+  const advanced = ['meetings', 'knowledge', 'goals', 'performance'];
+  const read = key => { try { return localStorage.getItem(key); } catch { return null; } };
+  const write = (key, value) => { try { localStorage.setItem(key, value); } catch {} };
+  const simpleButton = document.getElementById('organaSimpleMenu');
+  const applySimple = simple => {
+    routeButtons.forEach(button => { if (advanced.includes(button.dataset.organaRoute)) button.hidden = simple; });
+    if (simpleButton) { simpleButton.setAttribute('aria-pressed', String(simple)); simpleButton.textContent = simple ? 'Menu: simple' : 'Menu: full'; }
+  };
+  applySimple(read('organaSimpleMenu') === '1');
+  simpleButton?.addEventListener('click', () => { const next = read('organaSimpleMenu') !== '1'; write('organaSimpleMenu', next ? '1' : '0'); applySimple(next); });
+  const liteButton = document.getElementById('organaLite3d');
+  const liteOn = () => { const saved = read('organaLite3d'); return saved !== null ? saved === '1' : (navigator.hardwareConcurrency || 8) <= 4 || matchMedia('(prefers-reduced-motion: reduce)').matches; };
+  if (liteButton) { liteButton.setAttribute('aria-pressed', String(liteOn())); liteButton.textContent = liteOn() ? '3D: lite' : '3D: full'; liteButton.addEventListener('click', () => { write('organaLite3d', liteOn() ? '0' : '1'); location.reload(); }); }
 })();
 
 // Branded progressive loading copy. The 3D scene owns when the splash closes.

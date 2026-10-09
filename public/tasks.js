@@ -140,6 +140,8 @@
     const submit=node('button','Send answer');submit.type='submit';submit.className='task-primary';
     form.append(label,input,submit);form.onsubmit=e=>{e.preventDefault();if(!input.value.trim()){input.setCustomValidity('Write an answer first.');input.reportValidity();return;}answerTask(task,input.value.trim());};
     article.append(form);
+    const assume=node('button','Proceed with your best assumptions');assume.type='button';assume.className='task-secondary';assume.title='The coworker continues using your goals and constraints, and lists the assumptions it made';
+    assume.onclick=()=>answerTask(task,'Use your best judgement based on the company goals and hard constraints. Do not ask again; state the assumptions you make clearly in the deliverable.');article.append(assume);
   }
   function agentActions(task, article, actions) {
     const agent = agentFor(task.assignee);
@@ -150,7 +152,11 @@
       article.append(node('p', `The agent could not finish: ${task.error}`, 'task-error'));
       actions.append(action('Try again', () => update(task.id, 'queued')));
     } else if (task.status === 'queued') article.append(node('p', 'Waiting for the AI agent to pick this up.', 'task-agent'));
-    else if (task.status === 'active') article.append(node('p', agent.mode !== 'dry-run' ? 'The configured AI agent is working on this…' : 'Deterministic demo run in progress…', 'task-agent'));
+    else if (task.status === 'active') {
+      const since = Date.parse(task.updatedAt || task.startedAt || ''), seconds = Number.isFinite(since) ? Math.max(0, Math.round((Date.now() - since) / 1000)) : 0;
+      const elapsed = seconds >= 5 ? ` ${seconds}s elapsed${seconds > 90 ? ' — taking longer than usual, it will fail with a reason if the model does not answer' : ' (usually 20–60s)'}.` : '';
+      article.append(node('p', agent.mode !== 'dry-run' ? `The configured AI agent is working on this…${elapsed}` : 'Deterministic demo run in progress…', 'task-agent'));
+    }
     else {
       article.append(node('p', task.by === 'dry-run' ? 'Dry run result, not AI output. Review before use.' : task.by ? `Draft by ${task.by}. Review before use.` : 'Result', 'task-agent'));
       if(task.status==='review')reviewControls(task,article);else article.append(window.OrganaUI.documentView(task.result,'task-result'));
@@ -287,6 +293,7 @@
       for (const name of new Set(tasks.filter(task => !team.some(person => person.n === task.assignee)).map(task => task.assignee))) {
         const option = node('option', `${name} (old prototype)`); option.value = name; el('agentFilter').append(option);
       }
+      if(el('taskWebResearch'))window.OrganaWorkspaces?.bindResearchCheckbox(el('taskWebResearch'));
       el('closeTasks').onclick = () => el('taskDialog').close();
       el('taskFilter').onchange = render; el('agentFilter').onchange = render;el('taskSearch').oninput=render;
       const savedCreation=draftRead('creation');try{const data=JSON.parse(savedCreation);if(data){el('taskTitle').value=data.title||'';el('taskBrief').value=data.brief||'';}}catch{}
@@ -296,6 +303,7 @@
         if(creating)return;const title = el('taskTitle').value.trim();
         if (!title) { el('taskTitle').setCustomValidity('Enter a task name.'); el('taskTitle').reportValidity(); return; }
         const draft = {title, assignee: el('taskAssignee').value, brief: el('taskBrief').value.trim(), status: 'queued', result: ''};
+        if(el('taskWebResearch')?.checked)draft.webResearch=true;
         if(server){draft.assigneeAgentId=identity(team.find(person=>person.n===draft.assignee)||{n:draft.assignee});delete draft.assignee;}
         const submitted=JSON.stringify({title:el('taskTitle').value,brief:el('taskBrief').value,assignee:el('taskAssignee').value}),signature=JSON.stringify(draft),requestKey='creation-request';let request;try{request=JSON.parse(draftRead(requestKey));}catch{}if(request?.signature!==signature){request={signature,id:crypto.randomUUID()};draftWrite(requestKey,JSON.stringify(request));}draft.clientRequestId=request.id;let task;creating=true;el('taskForm').querySelector('[type=submit]').disabled=true;try{
         if (server) {

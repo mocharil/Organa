@@ -54,15 +54,18 @@ class StandupService{
   const tasks=(s.tasks||[]).filter(t=>t.companyId===cid).sort(recent);
   const meetings=(s.meetings||[]).filter(m=>m.companyId===cid).sort(recent);
   const approvals=(s.approvals||[]).filter(a=>a.companyId===cid&&a.status==='pending').sort(recent);
-  const completed=tasks.filter(t=>t.status==='done').slice(0,8).map(t=>({summary:`${agents.get(t.assigneeAgentId)?.displayName||'Agent'} completed “${t.title}”.`,ref:`task:${t.id}`}));
+  const note=t=>String(t?.history?.[t.history.length-1]?.decisionSummary||'').trim().slice(0,300),taskById=new Map(tasks.map(t=>[t.id,t])),who=t=>agents.get(t?.assigneeAgentId)?.displayName||'';
+  const completed=tasks.filter(t=>t.status==='done').slice(0,8).map(t=>({detail:note(t),summary:`${agents.get(t.assigneeAgentId)?.displayName||'Agent'} completed “${t.title}”.`,ref:`task:${t.id}`}));
   const decisions=meetings.filter(m=>['review','completed'].includes(m.status)&&m.result?.summary).slice(0,5).map(m=>({summary:m.result.summary,ref:`meeting:${m.id}`}));
   const approvalEntities=new Set(approvals.map(a=>`${a.entityType}:${a.entityId}`));
-  const needsAttention=[...approvals.map(a=>({priority:'high',summary:a.title,ref:`approval:${a.id}`})),...tasks.filter(t=>t.status==='review'&&!approvalEntities.has(`task:${t.id}`)).map(t=>({priority:'medium',summary:`Review “${t.title}”.`,ref:`task:${t.id}`}))].slice(0,10);
+  const needsAttention=[...approvals.map(a=>{const t=a.entityType==='task'?taskById.get(a.entityId):null;return{priority:'high',summary:a.title,detail:note(t),owner:who(t),ref:`approval:${a.id}`};}),...tasks.filter(t=>t.status==='review'&&!approvalEntities.has(`task:${t.id}`)).map(t=>({priority:'medium',summary:`Review “${t.title}”.`,detail:note(t),owner:who(t),ref:`task:${t.id}`}))].slice(0,10);
   const blockers=[...meetings.filter(m=>m.status==='failed').map(m=>({summary:`${m.title}: ${m.error||'Meeting failed; retry required.'}`,ref:`meeting:${m.id}`})),...tasks.filter(t=>['blocked','failed'].includes(t.status)).map(t=>({summary:`${t.title}: ${t.error||t.questions?.join(' ')||'blocked'}`,ref:`task:${t.id}`}))].slice(0,10);
   const next=[...meetings.filter(m=>m.status==='needs_input'||(m.status==='scheduled'&&(m.dependencyIds||[]).every(id=>tasks.some(t=>t.id===id&&t.status==='done')))).map(m=>({summary:`${m.status==='needs_input'?'Revise meeting':'Ready for meeting'}: ${m.title}${m.reviewNote?`: ${m.reviewNote}`:''}`,ref:`meeting:${m.id}`})),...tasks.filter(t=>['queued','waiting_dependency'].includes(t.status)).map(t=>({summary:`${t.status==='queued'?'Ready':'Waiting on dependencies'}: ${t.title}`,ref:`task:${t.id}`}))].slice(0,8);
   const usage=(s.usage||[]).filter(u=>u.companyId===cid);
   const total=usage.reduce((a,u)=>a+(u.totalTokens||0),0);
-  return{generatedAt:now(),completed,decisions,needsAttention,blockers,next,usageSummary:usage.length?`${usage.length} model calls, ${total.toLocaleString()} total tokens recorded.`:'No paid model usage recorded in this workspace.'};
+  const north=(s.northStars||[]).find(n=>n.companyId===cid&&n.status==='active')||null;
+  const context={goals:(s.goals||[]).filter(g=>g.companyId===cid&&!['archived','done','completed'].includes(g.status)).slice(0,5).map(g=>g.title),hardConstraints:(north?.constraints||[]).filter(c=>c.severity==='hard').slice(0,6).map(c=>c.text)};
+  return{generatedAt:now(),context,completed,decisions,needsAttention,blockers,next,usageSummary:usage.length?`${usage.length} model calls, ${total.toLocaleString()} total tokens recorded.`:'No paid model usage recorded in this workspace.'};
  }
  async generate(){
   const companyId=this.stateManager.get().activeCompanyId;

@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased — daily use, demo and AI quality
+
+- Workspaces: switch between organizations from the header; an instant, non-destructive Nusa Coffee demo workspace built from a real Gemini run (Settings → Workspaces).
+- Automatic rolling backups of the workspace file, safety backups before demo changes and restores, and a Backups panel with restore (Settings → Backups).
+- Document export: Download .md and Copy text, plus a Constraint guard line showing the checks each coworker recorded.
+- Overview "Needs you" card, tab-title count of waiting items, and real mission progress from task status.
+- Fewer redundant questions from coworkers, with a one-click "Proceed with your best assumptions".
+- Stand-up items now carry detail, owner, goals and constraints, which raised judged stand-up quality from 3.4 to 4.5 out of 5.
+- KPI suggestions are named; goal and mission titles are cut at word boundaries.
+- Web research: tick "Use web research" on a task or mission to ground it in live Google Search with cited sources.
+- Export to Word (.docx) and Excel (.csv), and optional Save to Google Docs / Sheets through your own Google account (drive.file scope only, OAuth with PKCE; see docs/GOOGLE_SETUP.md).
+- Emails: AI drafts an email from your instruction or from any document; you choose recipients, edit, and send through your own Gmail (send-only permission). Safeguards: confirmation on every send, no placeholders, recipient and daily limits, single send on double click, recovery after a dropped connection or restart, and "Open in Gmail" with no setup.
+- Safer defaults: the server listens on 127.0.0.1 unless HOST is set.
+- Windows-safe cancellation test, a live AI quality evaluation (npm run test:quality) and a guided tour.
+
 ## 3.18.5 — UI refresh and source recovery
 
 Rebuilt from the available v3.18.2 archive after the later workspace source was unavailable. This release is a tested replacement, not a byte-for-byte restoration of v3.18.4.

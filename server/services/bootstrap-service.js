@@ -1,7 +1,7 @@
 const crypto = require('node:crypto');
 const {companyProposalSchema} = require('../ai/schemas');
 const prompts = require('../prompts');
-const {id, now, avatarFor} = require('./helpers');
+const {id, now, avatarFor, shortTitle} = require('./helpers');
 const {templates} = require('../data/team-templates');
 
 const isChief = role => /chief of staff/i.test(role || '');
@@ -190,7 +190,7 @@ class BootstrapService {
     data.initialGoals = Array.isArray(data.initialGoals) ? data.initialGoals.filter(object).slice(0, 3) : [];
     if (input.goal) {
       const first = data.initialGoals[0] || {};
-      data.initialGoals = [{...first, title: input.goal.slice(0, 160), description: input.goal, successCriteria: generatedList(first.successCriteria).length ? generatedList(first.successCriteria) : ['A reviewable cross-functional outcome is produced'], suggestedKpis: Array.isArray(first.suggestedKpis) ? first.suggestedKpis.filter(object) : []}];
+      data.initialGoals = [{...first, title: shortTitle(input.goal), description: input.goal, successCriteria: generatedList(first.successCriteria).length ? generatedList(first.successCriteria) : ['A reviewable cross-functional outcome is produced'], suggestedKpis: Array.isArray(first.suggestedKpis) ? first.suggestedKpis.filter(object) : []}];
     }
     data.initialTasks = Array.isArray(data.initialTasks) ? data.initialTasks.filter(object).slice(0, 5) : [];
     data.assumptions = generatedList(data.assumptions);
@@ -292,7 +292,7 @@ class BootstrapService {
     }));
     const goals = proposal.initialGoals.map(goal => ({id: id('goal'), companyId, title: generatedText(goal.title, 160) || 'Initial goal', description: generatedText(goal.description, 2000), deadline: goal.deadline || null, successCriteria: generatedList(goal.successCriteria), status: 'active', createdAt, updatedAt: createdAt}));
     northStar.activeGoalIds = goals.map(goal => goal.id);
-    northStar.kpis = proposal.initialGoals.flatMap(goal => Array.isArray(goal.suggestedKpis) ? goal.suggestedKpis.filter(object) : []).slice(0, 10).map((kpi, index) => ({id: id('kpi'), name: kpi.name || `KPI ${index + 1}`, target: kpi.target ?? null, unit: kpi.unit || '', deadline: kpi.deadline || null}));
+    northStar.kpis = proposal.initialGoals.flatMap(goal => Array.isArray(goal.suggestedKpis) ? goal.suggestedKpis.filter(kpi => object(kpi) && typeof kpi.name === 'string' && kpi.name.trim()) : []).slice(0, 10).map((kpi, index) => ({id: id('kpi'), name: kpi.name || `KPI ${index + 1}`, target: kpi.target ?? null, unit: kpi.unit || '', deadline: kpi.deadline || null}));
     state.companies.push(company);
     state.northStars.push(northStar);
     state.agents.push(...agents);

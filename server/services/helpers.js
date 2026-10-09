@@ -8,4 +8,6 @@ const activeNorthStar=(state)=>[...(state.northStars||[])].filter(n=>n.companyId
 const activeAgents=(state)=>(state.agents||[]).filter(a=>a.companyId===state.activeCompanyId&&a.status==='active');
 const groupForDivision=division=>{const d=String(division||'').toLowerCase();if(/lead|executive|management/.test(d))return'leadership';if(/engineer|product|design|tech|creative/.test(d))return'engineering';if(/support|customer|finance|operation|service/.test(d))return'service';return'marketing';};
 const avatarFor=(name,division,index=0)=>({initials:initials(name),gender:index%3===0?'male':'female',group:groupForDivision(division)});
-module.exports={now,id,clean,activeCompany,activeNorthStar,activeAgents,groupForDivision,avatarFor};
+// Titles are cut at a word boundary so numbers and names are never split in the middle.
+const shortTitle=(text,max=120)=>{const value=String(text||'').replace(/\s+/g,' ').trim();if(value.length<=max)return value;const cut=value.slice(0,max),space=cut.lastIndexOf(' ');return `${(space>max*0.6?cut.slice(0,space):cut).replace(/[\s,;:.-]+$/,'')}…`;};
+module.exports={shortTitle,now,id,clean,activeCompany,activeNorthStar,activeAgents,groupForDivision,avatarFor};

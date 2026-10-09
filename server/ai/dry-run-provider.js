@@ -97,13 +97,34 @@ function dryStandup(context = {}) {
   return {headline: attention.length ? `${attention.length} item${attention.length === 1 ? '' : 's'} need owner attention.` : completed.length ? `${completed.length} meaningful item${completed.length === 1 ? '' : 's'} completed in the current window.` : 'The team is ready for the next mission.', completed, decisions: (snapshot.decisions || []).slice(0, 5), needsAttention: attention, blockers, next: (snapshot.next || []).slice(0, 5), usageSummary: snapshot.usageSummary || 'Dry-run mode: no paid model usage recorded.'};
 }
 
+function dryEmail(context = {}) {
+  const instruction = String(context.instruction || 'your request').replace(/s+/g, ' ').trim();
+  return {
+    subject: `Following up: ${instruction.slice(0, 60)}`,
+    body: `Hello,
+
+I am writing about: ${instruction.slice(0, 300)}
+
+Please let me know a good time to talk.
+
+Best regards${context.senderName ? `,
+${context.senderName}` : ''}`,
+    concerns: [], constraintChecks: ['Deterministic demo draft: no live constraint review was performed.'], assumptions: [],
+  };
+}
+
 class DryRunProvider extends LlmProvider {
   constructor(config) { super({name: 'dry-run', model: null}); this.config = config; }
+  supportsResearch() { return true; }
+  async research({query = '', metadata = {}}) {
+    if (this.config.dryRunDelayMs) await new Promise(resolve => setTimeout(resolve, this.config.dryRunDelayMs));
+    return {text: `Deterministic research notes for: ${String(query).slice(0, 120)}`, sources: [{title: 'example.invalid', uri: 'https://example.invalid/research'}], searchQueries: ['dry-run query'], usage: {inputTokens: 0, outputTokens: 0, cachedTokens: 0, totalTokens: 0}, model: null, provider: 'dry-run', requestId: crypto.randomUUID(), latencyMs: 0, metadata};
+  }
   async generate({metadata = {}, context = {}}) {
     const startedAt=Date.now();
     if (this.config.dryRunDelayMs) await new Promise(resolve => setTimeout(resolve, this.config.dryRunDelayMs));
     const action = metadata.action || 'specialist';
-    const generators = {company_architect: dryCompany, agent_designer: dryAgentDesign, chief_of_staff: dryPlan, specialist: drySpecialist, meeting_participant: dryParticipant, meeting_moderator: dryModerator, standup: dryStandup};
+    const generators = {company_architect: dryCompany, agent_designer: dryAgentDesign, chief_of_staff: dryPlan, specialist: drySpecialist, meeting_participant: dryParticipant, meeting_moderator: dryModerator, standup: dryStandup, email_draft: dryEmail};
     const data = (generators[action] || drySpecialist)(context);
     const text = JSON.stringify(data);
     return {text, data, toolCalls: [], usage: {inputTokens: 0, outputTokens: 0, cachedTokens: 0, totalTokens: 0}, model: null, provider: 'dry-run', requestId: crypto.randomUUID(), latencyMs: Date.now()-startedAt, metadata};
